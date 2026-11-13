@@ -35,7 +35,7 @@ bash scripts/statusdesk/smoke-container.sh statusdesk-console:test
 
 Run **Actions → Review upstream changes**. Choose `main` for a stable update; `beta` is a deliberate opt-in, never an automatic upgrade.
 
-If the upstream revision is already included, the workflow reports that and changes nothing. Otherwise it merges upstream into a new `codex/upstream-…` review branch, records the new baseline, opens a PR into the maintained branch, and calls the same test/container workflow for the candidate. It never merges that PR or deploys it. GitHub may also request approval for PR-triggered checks created by its automation token; the reusable verification job in the update run does not depend on that PR event.
+If the upstream revision is already included, the workflow reports that and changes nothing. Otherwise it merges upstream into a new `codex/upstream-…` review branch, records the new baseline, provides a link to open a PR into the maintained branch manually, and calls the same test/container workflow for the candidate. It never opens or approves a PR, merges changes, or deploys. The reusable verification job checks the prepared branch directly; it does not depend on a token-generated PR event or permission to approve reviews.
 
 If there are merge conflicts, the workflow stops and lists the files in its summary. Resolve them in a local integration branch:
 
