@@ -37,7 +37,7 @@ return [
     'default_strategy' => 'Predvolená stratégia',
     'delete_strategy' => 'Odstrániť',
     'device_gets_one_strategy_its' => 'Zariadenie použije najskôr vlastnú stratégiu, potom stratégiu vlastníka, skupiny zariadení a napokon predvolenú. Výber cieľa priradeného inde ho presunie sem.',
-    'device_groups' => 'Skupiny zariadení',
+    'device_groups' => 'Organizácie',
     'direct_assignments_are_released_automati' => 'Priame priradenia sa automaticky zrušia.',
     'disabled_strategy_is_skipped_as' => 'Vypnutá stratégia sa ignoruje, akoby nebola priradená.',
     'duplicate' => 'Duplikovať',

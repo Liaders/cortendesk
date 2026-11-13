@@ -83,7 +83,7 @@
                                     @foreach ($strategyExplain['steps'] as $step)
                                         <li class="d-flex justify-content-between align-items-start gap-2 py-1 border-top">
                                             <span class="text-muted">
-                                                {{ $step['label'] }}@if ($step['target'])<span class="text-body"> · {{ $step['target'] }}</span>@endif
+                                                {{ $step['level'] === \App\Models\Strategy::LEVEL_DEVICE_GROUP ? __('organizations.primary') : $step['label'] }}@if ($step['target'])<span class="text-body"> · {{ $step['target'] }}</span>@endif
                                             </span>
                                             <span class="text-end">
                                                 @switch ($step['state'])

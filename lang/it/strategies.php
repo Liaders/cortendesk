@@ -37,7 +37,7 @@ return [
     'default_strategy' => 'Strategia predefinita',
     'delete_strategy' => 'Elimina strategia',
     'device_gets_one_strategy_its' => 'Un dispositivo riceve una sola strategia: prevale la sua assegnazione, poi quella del proprietario, poi quella del gruppo di dispositivi, infine quella predefinita. Selezionare una destinazione che appartiene già a un\'altra strategia la sposta qui.',
-    'device_groups' => 'Gruppi dispositivi',
+    'device_groups' => 'Organizzazioni',
     'direct_assignments_are_released_automati' => 'Le assegnazioni dirette vengono rilasciate automaticamente.',
     'disabled_strategy_is_skipped_as' => 'Una strategia disattivata viene ignorata come se non fosse assegnata.',
     'duplicate' => 'Duplica',

@@ -55,7 +55,7 @@ return [
     'sso_only' => 'Csak SSO',
     'standard_user' => 'Normál felhasználó',
     'this_user_has_not_signed' => 'Ez a felhasználó még nem jelentkezett be RustDesk-kliensen.',
-    'this_user_sees_only_devices' => 'Ez a felhasználó csak a saját eszközeit és az alább bejelölt csoportok eszközeit látja.',
+    'this_user_sees_only_devices' => 'A hozzáférés a kiválasztott szervezetek elsődleges eszközeire vonatkozik. A további időkimutatási hozzárendelések nem adnak hozzáférést.',
     'two_factor' => 'Kétfaktoros',
     'two_factor_authentication_enabled' => 'Kétfaktoros hitelesítés bekapcsolva',
     'user_can_belong_to_several' => 'Egy felhasználó több csoportnak is tagja lehet. A csoportok szabályozzák a címjegyzék-megosztást és az eszközcsoport-hozzáférést.',

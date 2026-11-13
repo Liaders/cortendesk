@@ -5,7 +5,7 @@ return [
     'administrators_see_every_device_and' => 'Los administradores ven todos los dispositivos y todos los ajustes de la consola.',
     'console_sign_in_is_by' => 'El inicio de sesión en la consola es por nombre de usuario, así que lo eliges tú, no la persona invitada.',
     'copy_link_now_it_is' => 'Copia el enlace ahora: solo se muestra una vez y no se puede recuperar después.',
-    'device_groups_they_may_access' => 'Grupos de dispositivos a los que puede acceder',
+    'device_groups_they_may_access' => 'Acceso a organizaciones',
     'e_g_jsmith' => 'p. ej., jsmith',
     'email_is_not_configured_so' => 'El correo no está configurado, así que no se envía nada: copia el enlace de abajo y hazlo llegar tú mismo (',
     'emailed_to' => 'Invitación enviada por correo a :email.',

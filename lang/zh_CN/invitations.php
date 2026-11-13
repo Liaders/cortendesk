@@ -5,7 +5,7 @@ return [
     'administrators_see_every_device_and' => '管理员可以看到所有设备和所有控制台设置。',
     'console_sign_in_is_by' => '控制台使用用户名登录，因此由你来设定用户名，而不是被邀请人。',
     'copy_link_now_it_is' => '请立即复制链接：它只显示一次，之后无法再次获取。',
-    'device_groups_they_may_access' => '可访问的设备组',
+    'device_groups_they_may_access' => '组织访问权限',
     'e_g_jsmith' => '例如：jsmith',
     'email_is_not_configured_so' => '未配置邮件，因此不会发送任何内容——请复制下方链接并自行转交（',
     'emailed_to' => '邀请已通过邮件发送至 :email。',

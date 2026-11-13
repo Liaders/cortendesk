@@ -26,6 +26,11 @@ class DeviceGroup extends Model
         return $this->hasMany(Device::class);
     }
 
+    public function workDevices(): BelongsToMany
+    {
+        return $this->belongsToMany(Device::class, 'device_work_groups');
+    }
+
     /** User groups granted access to this folder. */
     public function userGroups(): BelongsToMany
     {

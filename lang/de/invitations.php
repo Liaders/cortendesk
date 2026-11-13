@@ -5,7 +5,7 @@ return [
     'administrators_see_every_device_and' => 'Administratoren sehen jedes Gerät und jede Konsoleneinstellung.',
     'console_sign_in_is_by' => 'Die Konsolenanmeldung erfolgt per Benutzername, daher wählen Sie ihn – nicht die eingeladene Person.',
     'copy_link_now_it_is' => 'Kopieren Sie den Link jetzt: Er wird nur einmal angezeigt und kann später nicht abgerufen werden.',
-    'device_groups_they_may_access' => 'Gerätegruppen, auf die sie zugreifen dürfen',
+    'device_groups_they_may_access' => 'Organisationszugriff',
     'e_g_jsmith' => 'z. B. jsmith',
     'email_is_not_configured_so' => 'E-Mail ist nicht konfiguriert, daher wird nichts gesendet – kopieren Sie den Link unten und geben Sie ihn selbst weiter (',
     'emailed_to' => 'Einladung per E-Mail an :email gesendet.',

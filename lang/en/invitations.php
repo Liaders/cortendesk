@@ -5,7 +5,7 @@ return [
     'administrators_see_every_device_and' => 'Administrators see every device and every console setting.',
     'console_sign_in_is_by' => 'Console sign-in is by username, so you pick it — not the invitee.',
     'copy_link_now_it_is' => 'Copy the link now: it is shown only once and cannot be retrieved later.',
-    'device_groups_they_may_access' => 'Device groups they may access',
+    'device_groups_they_may_access' => 'Organization access',
     'e_g_jsmith' => 'e.g. jsmith',
     'email_is_not_configured_so' => 'Email is not configured, so nothing is sent — copy the link below and pass it on yourself (',
     'emailed_to' => 'Invitation emailed to :email.',

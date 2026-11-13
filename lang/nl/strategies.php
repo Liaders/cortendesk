@@ -37,7 +37,7 @@ return [
     'default_strategy' => 'Standaardstrategie',
     'delete_strategy' => 'Strategie verwijderen',
     'device_gets_one_strategy_its' => 'Een apparaat krijgt één strategie: de eigen toewijzing gaat voor, dan die van de eigenaar, dan die van de apparaatgroep, dan de standaard. Vinkt u een doel aan dat al bij een andere strategie hoort, dan wordt het hierheen verplaatst.',
-    'device_groups' => 'Apparaatgroepen',
+    'device_groups' => 'Organisaties',
     'direct_assignments_are_released_automati' => 'Directe toewijzingen worden automatisch vrijgegeven.',
     'disabled_strategy_is_skipped_as' => 'Een uitgeschakelde strategie wordt overgeslagen alsof die niet is toegewezen.',
     'duplicate' => 'Dupliceren',

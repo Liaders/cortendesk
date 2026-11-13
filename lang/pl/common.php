@@ -36,7 +36,7 @@ return [
     'delete' => 'Usuń',
     'device' => 'Urządzenie',
     'device_access' => 'Dostęp do urządzeń',
-    'device_group' => 'Grupa urządzeń',
+    'device_group' => 'Organizacja',
     'devices' => 'Urządzenia',
     'disabled' => 'Wyłączone',
     'dismiss' => 'Odrzuć',

@@ -345,7 +345,7 @@
                                     {{-- Device-group access (non-admins only) --}}
                                     @unless ($is_admin)
                                         <div class="mb-1">
-                                            <label class="form-label">{{ __('common.device_access') }}</label>
+                                            <label class="form-label">{{ __('organizations.access') }}</label>
                                             <p class="text-muted fs-13 mb-2">{{ __('users.this_user_sees_only_devices') }}</p>
                                             <div class="rd-scrollbox p-2" style="max-height: 210px; overflow-y: auto;">
                                                 @forelse ($deviceGroups as $dg)

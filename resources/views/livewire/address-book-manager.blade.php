@@ -559,7 +559,7 @@
                                 </div>
                             @elseif ($ruleSubjectType === 'group')
                                 <div class="mb-3">
-                                    <label class="form-label" for="ab-rule-group">{{ __('common.group') }}</label>
+                                    <label class="form-label" for="ab-rule-group">{{ __('organizations.primary') }}</label>
                                     <select id="ab-rule-group" class="form-select @error('ruleSubjectId') is-invalid @enderror"
                                             wire:model="ruleSubjectId">
                                         <option value="">{{ __('address_books.choose_group') }}</option>

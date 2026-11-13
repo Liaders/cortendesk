@@ -5,7 +5,7 @@ return [
     'administrators_see_every_device_and' => 'A rendszergazdák minden eszközt és minden konzolbeállítást látnak.',
     'console_sign_in_is_by' => 'A konzolba felhasználónévvel lehet bejelentkezni, ezért azt Ön választja meg — nem a meghívott.',
     'copy_link_now_it_is' => 'Másolja ki most a hivatkozást: csak egyszer jelenik meg, később nem kérhető le.',
-    'device_groups_they_may_access' => 'Eszközcsoportok, amelyekhez hozzáférhet',
+    'device_groups_they_may_access' => 'Hozzáférés a szervezetekhez',
     'e_g_jsmith' => 'pl. jsmith',
     'email_is_not_configured_so' => 'Az e-mail nincs beállítva, ezért nem küldünk semmit — másolja ki az alábbi hivatkozást, és adja át saját maga (',
     'emailed_to' => 'A meghívó elküldve e-mailben ide: :email.',

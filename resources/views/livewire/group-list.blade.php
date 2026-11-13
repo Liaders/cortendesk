@@ -39,7 +39,7 @@
                 </div>
                 <div class="rd-toolbar-actions">
                     <button type="button" class="btn btn-primary" wire:click="create('{{ $tab }}')">
-                        <i class="ri-add-line"></i>{{ __('groups.add_group') }}
+                        <i class="ri-add-line"></i>{{ $tab === 'users' ? __('groups.add_group') : __('groups.add_device_group') }}
                     </button>
                 </div>
             </div>
@@ -62,12 +62,14 @@
                     <tbody>
                     @forelse ($current as $group)
                         <tr wire:key="g-{{ $tab }}-{{ $group->id }}">
-                            <td class="fw-semibold">{{ $group->name }}</td>
+                            <td class="fw-semibold">@if ($tab === 'users' || ! auth()->user()?->consoleAllows('device', 'r')){{ $group->name }}@else<button type="button" class="btn btn-link p-0 text-start text-decoration-none" wire:click="showOrganizationDevices({{ $group->id }})">{{ $group->name }}</button>@endif</td>
                             <td>{{ $group->note ?: '—' }}</td>
                             <td>
-                                <span class="badge bg-secondary-subtle text-secondary">
-                                    {{ $tab === 'users' ? $group->users_count : $group->devices_count }}
-                                </span>
+                                @if ($tab === 'users')
+                                    <span class="badge bg-secondary-subtle text-secondary">{{ $group->users_count }}</span>
+                                @else
+                                    @include('livewire.partials.organization-device-counts')
+                                @endif
                             </td>
                             @if ($tab === 'users')
                                 <td>
@@ -102,7 +104,7 @@
                                             ? __('groups.user_groups_decide_who_can')
                                             : __('groups.device_groups_keep_machines_organised') }}
                                     </p>
-                                    <button type="button" class="btn btn-sm btn-outline-light" wire:click="create('{{ $tab }}')">{{ __('groups.add_group') }}</button>
+                                    <button type="button" class="btn btn-sm btn-outline-light" wire:click="create('{{ $tab }}')">{{ $tab === 'users' ? __('groups.add_group') : __('groups.add_device_group') }}</button>
                                 </div>
                             </td>
                         </tr>
@@ -117,13 +119,14 @@
                     <div class="rd-mini" wire:key="mg-{{ $tab }}-{{ $group->id }}">
                             <div class="rd-mini-head">
                                 <div class="min-width-0">
-                                    <span class="rd-mini-title">{{ $group->name }}</span>
+                                    <span class="rd-mini-title">@if ($tab === 'users' || ! auth()->user()?->consoleAllows('device', 'r')){{ $group->name }}@else<button type="button" class="btn btn-link p-0 text-start text-decoration-none" wire:click="showOrganizationDevices({{ $group->id }})">{{ $group->name }}</button>@endif</span>
                                     <span class="rd-mini-sub">{{ $group->note ?: __('groups.no_note') }}</span>
                                 </div>
-                                <span class="badge bg-secondary-subtle text-secondary">
-                                    {{ $tab === 'users' ? $group->users_count : $group->devices_count }}
-                                    {{ strtolower($countLabel) }}
-                                </span>
+                                @if ($tab === 'users')
+                                    <span class="badge bg-secondary-subtle text-secondary">{{ $group->users_count }} {{ strtolower($countLabel) }}</span>
+                                @else
+                                    @include('livewire.partials.organization-device-counts')
+                                @endif
                             </div>
                             @if ($tab === 'users' && $group->deviceGroups->isNotEmpty())
                                 <div class="mt-2">
@@ -149,11 +152,15 @@
                         <p class="rd-empty-title">
                             {{ $tab === 'users' ? __('groups.no_user_groups_yet_tap') : __('groups.no_device_groups_yet_tap') }}
                         </p>
-                        <button type="button" class="btn btn-sm btn-outline-light" wire:click="create('{{ $tab }}')">{{ __('groups.add_group') }}</button>
+                        <button type="button" class="btn btn-sm btn-outline-light" wire:click="create('{{ $tab }}')">{{ $tab === 'users' ? __('groups.add_group') : __('groups.add_device_group') }}</button>
                     </div>
                 @endforelse
             </div>
     </div>
+
+    @if ($tab === 'devices' && $viewedOrganization)
+        @include('livewire.partials.organization-devices')
+    @endif
 
     {{-- Create / Edit modal (plain Bootstrap markup, toggled by Livewire) --}}
     @include('livewire.partials.group-edit-modal')

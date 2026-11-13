@@ -29,6 +29,9 @@ trait EditsDevices
     #[Locked]
     public string $groupCreationToken = '';
 
+    #[Locked]
+    public string $groupCreationPurpose = 'primary';
+
     /** Groups created by this editor, without changing visibility grants. */
     #[Locked]
     public array $createdEditorGroupIds = [];
@@ -43,8 +46,15 @@ trait EditsDevices
         }
         $this->authorizeConsole('group', 'rw');
         abort_if($this->editingId === null, 403);
+        $this->groupCreationPurpose = 'primary';
         $this->groupCreationToken = (string) Str::uuid();
         $this->newGroupDialogOpen = true;
+    }
+
+    public function createEditorWorkGroup(): void
+    {
+        $this->selectEditorGroup(-1);
+        $this->groupCreationPurpose = 'work';
     }
 
     #[On('device-editor-group-closed')]
@@ -59,11 +69,16 @@ trait EditsDevices
             $this->authorizeConsole('group', 'rw');
             if (DeviceGroup::whereKey($id)->exists()) {
                 $this->createdEditorGroupIds[] = (int) $id;
-                $this->formGroupId = (int) $id;
+                if ($this->groupCreationPurpose === 'work') {
+                    $this->formWorkGroupIds = array_values(array_unique([...$this->formWorkGroupIds, (int) $id]));
+                } else {
+                    $this->formGroupId = (int) $id;
+                }
             }
         }
         $this->newGroupDialogOpen = false;
         $this->groupCreationToken = '';
+        $this->groupCreationPurpose = 'primary';
     }
 
     public string $formRustdeskId = '';
@@ -116,7 +131,11 @@ trait EditsDevices
     {
         $this->authorizeConsole('device', 'rw');
 
-        $existingWorkGroups = $this->editingId ? $this->scopedDevice($this->editingId)->workGroups()->pluck('device_groups.id')->all() : [];
+        $currentDevice = $this->editingId ? $this->scopedDevice($this->editingId) : null;
+        $existingWorkGroups = $currentDevice ? $currentDevice->workGroups()->pluck('device_groups.id')->all() : [];
+        if ($currentDevice?->device_group_id) {
+            $existingWorkGroups[] = $currentDevice->device_group_id;
+        }
         $data = $this->validate([
             'formRustdeskId' => 'required|string|max:100',
             'formAlias' => 'nullable|string|max:255',
@@ -173,7 +192,7 @@ trait EditsDevices
 
         $device->workGroups()->sync(array_values(array_diff(array_map('intval', $data['formWorkGroupIds']), [(int) $data['formGroupId']])));
         $this->editingId = null;
-        $this->reset('newGroupDialogOpen', 'groupCreationToken', 'createdEditorGroupIds', 'formWorkGroupIds');
+        $this->reset('newGroupDialogOpen', 'groupCreationToken', 'groupCreationPurpose', 'createdEditorGroupIds', 'formWorkGroupIds');
     }
 
     /**
@@ -213,7 +232,7 @@ trait EditsDevices
     public function closeModal(): void
     {
         $this->editingId = null;
-        $this->reset('newGroupDialogOpen', 'groupCreationToken', 'createdEditorGroupIds', 'formWorkGroupIds');
+        $this->reset('newGroupDialogOpen', 'groupCreationToken', 'groupCreationPurpose', 'createdEditorGroupIds', 'formWorkGroupIds');
     }
 
     /** Device groups this actor may see and therefore may choose. */
@@ -235,10 +254,12 @@ trait EditsDevices
     protected function editorViewData(): array
     {
         $open = $this->editingId !== null;
+        $editorDevice = $open && $this->editingId ? $this->scopedDevice($this->editingId)->load(['group', 'workGroups']) : null;
+        $groups = $open ? $this->accessibleDeviceGroups()->concat($editorDevice?->group ? [$editorDevice->group] : [])->unique('id')->sortBy('name') : collect();
 
         return [
-            'editorGroups' => $open ? $this->accessibleDeviceGroups() : collect(),
-            'editorWorkGroups' => $open ? $this->accessibleDeviceGroups()->concat($this->editingId ? $this->scopedDevice($this->editingId)->workGroups : [])->unique('id')->sortBy('name') : collect(),
+            'editorGroups' => $groups,
+            'editorWorkGroups' => $groups->concat($editorDevice?->workGroups ?? [])->unique('id')->sortBy('name'),
             'editorUsers' => $open ? User::orderBy('username')->get(['id', 'username']) : collect(),
             'strategies' => $this->editorStrategies(),
             'strategyExplain' => $this->editorStrategyExplain(),

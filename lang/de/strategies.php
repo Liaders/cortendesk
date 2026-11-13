@@ -37,7 +37,7 @@ return [
     'default_strategy' => 'Standardstrategie',
     'delete_strategy' => 'Strategie löschen',
     'device_gets_one_strategy_its' => 'Ein Gerät erhält eine Strategie: Zuerst zählt seine eigene Zuweisung, dann die seines Besitzers, dann die seiner Gerätegruppe, dann die Standardstrategie. Wird ein Ziel markiert, das schon zu einer anderen Strategie gehört, wird es hierher verschoben.',
-    'device_groups' => 'Gerätegruppen',
+    'device_groups' => 'Organisationen',
     'direct_assignments_are_released_automati' => 'Direkte Zuweisungen werden automatisch aufgehoben.',
     'disabled_strategy_is_skipped_as' => 'Eine deaktivierte Strategie wird übersprungen, als wäre sie nicht zugewiesen.',
     'duplicate' => 'Duplizieren',

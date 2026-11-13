@@ -37,7 +37,7 @@ return [
     'default_strategy' => 'Estratégia padrão',
     'delete_strategy' => 'Apagar estratégia',
     'device_gets_one_strategy_its' => 'Um dispositivo recebe uma estratégia: a atribuição própria prevalece, depois a do proprietário, depois a do grupo de dispositivos e por fim a padrão. Marcar um alvo que já pertence a outra estratégia o move para cá.',
-    'device_groups' => 'Grupos de dispositivos',
+    'device_groups' => 'Organizações',
     'direct_assignments_are_released_automati' => 'As atribuições diretas são liberadas automaticamente.',
     'disabled_strategy_is_skipped_as' => 'Uma estratégia desabilitada é ignorada como se não estivesse atribuída.',
     'duplicate' => 'Duplicar',

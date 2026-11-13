@@ -55,7 +55,7 @@ return [
     'sso_only' => 'SSO uniquement',
     'standard_user' => 'Utilisateur standard',
     'this_user_has_not_signed' => 'Cet utilisateur ne s’est connecté à aucun client RustDesk.',
-    'this_user_sees_only_devices' => 'Cet utilisateur ne voit que les appareils qu’il possède et ceux des groupes cochés ci-dessous.',
+    'this_user_sees_only_devices' => 'L’accès est accordé aux appareils principaux des organisations sélectionnées. Les affectations supplémentaires de suivi du temps ne donnent aucun accès.',
     'two_factor' => 'Double authentification',
     'two_factor_authentication_enabled' => 'Authentification à deux facteurs activée',
     'user_can_belong_to_several' => 'Un utilisateur peut appartenir à plusieurs groupes. Les groupes déterminent le partage des carnets d’adresses et l’accès aux groupes d’appareils.',

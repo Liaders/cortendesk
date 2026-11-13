@@ -5,7 +5,7 @@ return [
     'administrators_see_every_device_and' => 'Beheerders zien elk apparaat en elke console-instelling.',
     'console_sign_in_is_by' => 'Inloggen op de console gaat met een gebruikersnaam, dus die kiest u — niet de genodigde.',
     'copy_link_now_it_is' => 'Kopieer de link nu: hij wordt maar één keer getoond en kan later niet worden opgehaald.',
-    'device_groups_they_may_access' => 'Apparaatgroepen waartoe deze persoon toegang heeft',
+    'device_groups_they_may_access' => 'Toegang tot organisaties',
     'e_g_jsmith' => 'bijv. jjansen',
     'email_is_not_configured_so' => 'E-mail is niet geconfigureerd, dus er wordt niets verzonden — kopieer de link hieronder en geef hem zelf door (',
     'emailed_to' => 'Uitnodiging gemaild naar :email.',

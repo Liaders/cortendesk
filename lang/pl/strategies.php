@@ -37,7 +37,7 @@ return [
     'default_strategy' => 'Strategia domyślna',
     'delete_strategy' => 'Usuń strategię',
     'device_gets_one_strategy_its' => 'Urządzenie otrzymuje jedną strategię: pierwszeństwo ma jego własne przypisanie, potem przypisanie właściciela, potem grupy urządzeń, a na końcu domyślna. Zaznaczenie celu, który należy już do innej strategii, przenosi go tutaj.',
-    'device_groups' => 'Grupy urządzeń',
+    'device_groups' => 'Organizacje',
     'direct_assignments_are_released_automati' => 'Bezpośrednie przypisania są zwalniane automatycznie.',
     'disabled_strategy_is_skipped_as' => 'Wyłączona strategia jest pomijana, jakby nie była przypisana.',
     'duplicate' => 'Duplikuj',

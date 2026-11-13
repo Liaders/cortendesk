@@ -37,7 +37,7 @@ return [
     'default_strategy' => 'Alapértelmezett stratégia',
     'delete_strategy' => 'Stratégia törlése',
     'device_gets_one_strategy_its' => 'Egy eszköz egy stratégiát kap: előbb a saját hozzárendelése számít, aztán a tulajdonosáé, majd az eszközcsoportjáé, végül az alapértelmezett. Egy másik stratégiához tartozó cél bejelölése ide helyezi át.',
-    'device_groups' => 'Eszközcsoportok',
+    'device_groups' => 'Szervezetek',
     'direct_assignments_are_released_automati' => 'A közvetlen hozzárendelések automatikusan felszabadulnak.',
     'disabled_strategy_is_skipped_as' => 'A letiltott stratégia kimarad, mintha nem lenne hozzárendelve.',
     'duplicate' => 'Duplikálás',

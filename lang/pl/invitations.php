@@ -5,7 +5,7 @@ return [
     'administrators_see_every_device_and' => 'Administratorzy widzą wszystkie urządzenia i wszystkie ustawienia konsoli.',
     'console_sign_in_is_by' => 'Do konsoli loguje się nazwą użytkownika, więc wybierasz ją Ty, a nie zaproszona osoba.',
     'copy_link_now_it_is' => 'Skopiuj link teraz: jest wyświetlany tylko raz i nie można go później odzyskać.',
-    'device_groups_they_may_access' => 'Grupy urządzeń, do których będzie mieć dostęp',
+    'device_groups_they_may_access' => 'Dostęp do organizacji',
     'e_g_jsmith' => 'np. jkowalski',
     'email_is_not_configured_so' => 'E-mail nie jest skonfigurowany, więc nic nie zostanie wysłane — skopiuj poniższy link i przekaż go samodzielnie (',
     'emailed_to' => 'Zaproszenie wysłano na adres :email.',

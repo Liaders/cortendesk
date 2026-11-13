@@ -55,7 +55,7 @@ return [
     'sso_only' => 'Alleen SSO',
     'standard_user' => 'Standaardgebruiker',
     'this_user_has_not_signed' => 'Deze gebruiker heeft nog niet ingelogd op een RustDesk-client.',
-    'this_user_sees_only_devices' => 'Deze gebruiker ziet alleen de eigen apparaten plus de apparaten in de hieronder aangevinkte groepen.',
+    'this_user_sees_only_devices' => 'Toegang wordt verleend tot primaire apparaten van de geselecteerde organisaties. Extra toewijzingen voor tijdregistratie verlenen geen toegang.',
     'two_factor' => 'Tweefactor',
     'two_factor_authentication_enabled' => 'Tweefactorauthenticatie ingeschakeld',
     'user_can_belong_to_several' => 'Een gebruiker kan bij meerdere groepen horen. Groepen bepalen het delen van adresboeken en de toegang tot apparaatgroepen.',

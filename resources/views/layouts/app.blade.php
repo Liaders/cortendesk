@@ -62,6 +62,7 @@
     <script src="{{ \App\Support\Asset::url('assets/js/shell.js') }}"></script>
     <script src="{{ \App\Support\Asset::url('assets/js/cortendesk.js') }}"></script>
     <script src="{{ \App\Support\Asset::url('assets/js/group-picker.js') }}"></script>
+    <script src="{{ \App\Support\Asset::url('assets/js/work-group-picker.js') }}"></script>
 
     @stack('scripts')
 </body>

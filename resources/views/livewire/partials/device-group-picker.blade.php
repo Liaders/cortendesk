@@ -3,7 +3,7 @@
      x-id="['group-list', 'group-input']"
      @click.outside="close()"
      @focusout="if (!$el.contains($event.relatedTarget)) close()">
-    <label class="form-label" :for="$id('group-input')">{{ __('common.group') }}</label>
+    <label class="form-label" :for="$id('group-input')">{{ __('organizations.primary') }}</label>
     <input type="text" class="form-select" autocomplete="off" role="combobox"
            :id="$id('group-input')" :value="open ? query : label"
            :placeholder="open ? @js(__('devices.search_group')) : ''"

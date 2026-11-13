@@ -67,7 +67,7 @@
                         <div class="modal-footer">
                             <button type="button" class="btn btn-light" wire:click="closeModal">{{ __('common.cancel') }}</button>
                             <button type="submit" class="btn btn-primary">
-                                <span wire:loading.remove wire:target="save">{{ $editing ? __('account.save_changes') : __('groups.create_group') }}</span>
+                                <span wire:loading.remove wire:target="save">{{ $editing ? __('account.save_changes') : ($modalType === 'users' ? __('groups.create_group') : __('groups.add_device_group')) }}</span>
                                 <span wire:loading wire:target="save">{{ __('common.saving') }}</span>
                             </button>
                         </div>

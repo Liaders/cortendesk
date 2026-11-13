@@ -5,7 +5,7 @@ return [
     'administrators_see_every_device_and' => 'Administradores veem todos os dispositivos e todas as configurações do console.',
     'console_sign_in_is_by' => 'O login no console é pelo nome de usuário, então é você quem o escolhe — não o convidado.',
     'copy_link_now_it_is' => 'Copie o link agora: ele é exibido apenas uma vez e não pode ser recuperado depois.',
-    'device_groups_they_may_access' => 'Grupos de dispositivos que poderá acessar',
+    'device_groups_they_may_access' => 'Acesso às organizações',
     'e_g_jsmith' => 'ex.: jsilva',
     'email_is_not_configured_so' => 'O e-mail não está configurado, então nada é enviado — copie o link abaixo e repasse-o você mesmo (',
     'emailed_to' => 'Convite enviado por e-mail para :email.',

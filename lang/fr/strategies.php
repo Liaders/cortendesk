@@ -37,7 +37,7 @@ return [
     'default_strategy' => 'Stratégie par défaut',
     'delete_strategy' => 'Supprimer la stratégie',
     'device_gets_one_strategy_its' => 'Un appareil reçoit une seule stratégie : sa propre attribution l’emporte, puis celle de son propriétaire, puis celle de son groupe d’appareils, puis celle par défaut. Cocher une cible qui appartient déjà à une autre stratégie la déplace ici.',
-    'device_groups' => 'Groupes d’appareils',
+    'device_groups' => 'Organisations',
     'direct_assignments_are_released_automati' => 'Les attributions directes sont libérées automatiquement.',
     'disabled_strategy_is_skipped_as' => 'Une stratégie désactivée est ignorée comme si elle n’était pas attribuée.',
     'duplicate' => 'Dupliquer',

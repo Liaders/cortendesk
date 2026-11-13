@@ -6,7 +6,13 @@ This contract covers Console's session-accounting API and the additive Organizat
 
 The existing device group remains the primary group. Optional additional work groups reuse the existing group catalog. They do not participate in device visibility, strategies, group filters or access grants.
 
-The shared Add/Edit device dialog offers a searchable, scrollable checklist of additional groups. Its primary group is always a work-group option, without a redundant pivot entry. Only groups the editor can access, or groups already assigned to that device, can be saved. Existing additional-group labels are accounting metadata visible to an authorized device editor; they do not expose the groups' devices.
+The shared Add/Edit device dialog shows compact organization tags and a searchable, scrollable add picker. The primary organization is shown with a Primary badge and no removal button. Extra tags can be removed; selected organizations are excluded from search results. The Create organization action reuses the existing group dialog and automatically adds its result as an additional tag, without changing the primary organization or unsaved device fields. Cancelling that dialog preserves the selection. Device assignments are committed when the device form is saved.
+
+Only groups the editor can access, groups already assigned to that device, or groups created in the current editor can be saved as additional assignments. Existing assignment labels are accounting metadata visible to an authorized device editor; they do not expose the organizations' other devices or create permanent access grants for the editor.
+
+The Console section is titled **Organizations and groups**, with **Organizations** and **User groups** tabs. Existing group routes, database identifiers, API fields and permission resource codes are retained. User groups and the separate Users section keep their roles. Primary organization labels are used for physical-device filters and membership; work organization labels refer to accounting attribution.
+
+Organization rows show separate primary-device and additional-accounting-device counts, scoped to the viewer's existing device visibility. Clicking an organization opens a read-only member dialog with separate lists. A device redundantly assigned through both paths appears only in the primary list/count. Pending, deleted and inaccessible devices are excluded. A group used only for accounting can therefore show zero primary devices and a nonzero additional count. Viewing member details requires both group-read and device-read Console permissions; no new device visibility is granted.
 
 ## Attribution
 

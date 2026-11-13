@@ -36,7 +36,7 @@ return [
     'delete' => 'Törlés',
     'device' => 'Eszköz',
     'device_access' => 'Eszközhozzáférés',
-    'device_group' => 'Eszközcsoport',
+    'device_group' => 'Szervezet',
     'devices' => 'Eszközök',
     'disabled' => 'Kikapcsolva',
     'dismiss' => 'Elvetés',

@@ -37,7 +37,7 @@ return [
     'default_strategy' => '默认策略',
     'delete_strategy' => '删除策略',
     'device_gets_one_strategy_its' => '每台设备只会获得一个策略：优先使用设备自身的分配，其次是所有者的，再次是设备组的，最后是默认策略。勾选已属于其他策略的目标会将其移到此策略。',
-    'device_groups' => '设备组',
+    'device_groups' => '组织',
     'direct_assignments_are_released_automati' => '直接分配会被自动解除。',
     'disabled_strategy_is_skipped_as' => '已禁用的策略会被跳过，如同未分配一样。',
     'duplicate' => '复制',

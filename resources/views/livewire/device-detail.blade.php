@@ -499,7 +499,7 @@
                             <div class="rd-def"><dt>{{ __('devices.uuid') }}</dt><dd class="rd-mono rd-select-all min-width-0">{{ $device->uuid ?: '—' }}</dd></div>
                             <div class="rd-def"><dt>{{ __('devices.first_seen_2') }}</dt><dd>{{ $device->created_at?->diffForHumans() ?? '—' }}</dd></div>
                             <div class="rd-def"><dt>{{ __('devices.last_seen') }}</dt>@if (! $device->last_online_at && ! $device->canBeControlled())<dd title="{{ __('devices.ios_no_presence') }}">—</dd>@else<dd>{{ $device->last_online_at?->diffForHumans() ?? __('common.never') }}</dd>@endif</div>
-                            <div class="rd-def"><dt>{{ __('common.group') }}</dt><dd>{{ $device->group?->name ?: '—' }}</dd></div>
+                            <div class="rd-def"><dt>{{ __('organizations.primary') }}</dt><dd>{{ $device->group?->name ?: '—' }}</dd></div>
                             <div class="rd-def"><dt>{{ __('devices.owner') }}</dt>
                                 <dd>
                                     @if ($device->user)

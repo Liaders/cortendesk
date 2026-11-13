@@ -83,7 +83,7 @@
                 <li class="rd-nav-item {{ request()->routeIs('groups') ? 'rd-current' : '' }}">
                     <a href="{{ route('groups') }}" class="rd-nav-link {{ request()->routeIs('groups') ? 'active' : '' }}">
                         <i class="ri-group-line"></i>
-                        <span> {{ __('common.groups') }} </span>
+                        <span class="d-inline-block text-wrap" style="max-width: calc(100% - 2rem);"> {{ __('organizations.section') }} </span>
                     </a>
                 </li>
             @endif

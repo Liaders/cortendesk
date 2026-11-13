@@ -36,7 +36,7 @@ return [
     'delete' => '删除',
     'device' => '设备',
     'device_access' => '设备访问权限',
-    'device_group' => '设备组',
+    'device_group' => '组织',
     'devices' => '设备',
     'disabled' => '已禁用',
     'dismiss' => '关闭',

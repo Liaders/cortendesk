@@ -55,7 +55,7 @@ return [
     'sso_only' => '仅 SSO',
     'standard_user' => '标准用户',
     'this_user_has_not_signed' => '此用户尚未在 RustDesk 客户端上登录。',
-    'this_user_sees_only_devices' => '此用户只能看到其拥有的设备，以及下方所勾选组中的设备。',
+    'this_user_sees_only_devices' => '访问权限仅授予所选组织的主要设备。附加工时统计关联不会授予访问权限。',
     'two_factor' => '双重认证',
     'two_factor_authentication_enabled' => '已启用双重认证',
     'user_can_belong_to_several' => '一个用户可以属于多个组。组决定地址簿共享和设备组访问权限。',

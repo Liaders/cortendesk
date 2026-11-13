@@ -36,7 +36,7 @@ return [
     'delete' => 'Verwijderen',
     'device' => 'Apparaat',
     'device_access' => 'Apparaattoegang',
-    'device_group' => 'Apparaatgroep',
+    'device_group' => 'Organisatie',
     'devices' => 'Apparaten',
     'disabled' => 'Uitgeschakeld',
     'dismiss' => 'Negeren',

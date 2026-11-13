@@ -36,7 +36,7 @@ return [
     'delete' => 'Odstrániť',
     'device' => 'Zariadenie',
     'device_access' => 'Prístup k zariadeniam',
-    'device_group' => 'Skupina zariadení',
+    'device_group' => 'Organizácia',
     'devices' => 'Zariadenia',
     'disabled' => 'Vypnuté',
     'dismiss' => 'Zavrieť',

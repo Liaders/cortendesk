@@ -23,6 +23,22 @@ class GroupList extends Component
     #[Locked]
     public string $editorToken = '';
 
+    #[Locked]
+    public ?int $viewingOrganizationId = null;
+
+    public function showOrganizationDevices(int $id): void
+    {
+        $this->authorizeConsole('group', 'r');
+        $this->authorizeConsole('device', 'r');
+        DeviceGroup::findOrFail($id);
+        $this->viewingOrganizationId = $this->viewingOrganizationId === $id ? null : $id;
+    }
+
+    public function closeOrganizationDevices(): void
+    {
+        $this->viewingOrganizationId = null;
+    }
+
     #[Url(except: 'devices')]
     public string $tab = 'devices';
 
@@ -238,8 +254,23 @@ class GroupList extends Component
 
     public function render()
     {
+        if ($this->viewingOrganizationId !== null) {
+            $this->authorizeConsole('group', 'r');
+            $this->authorizeConsole('device', 'r');
+        }
+        $visibleIds = Device::visibleTo(auth()->user())->select('devices.id');
+        $organization = $this->tab === 'devices' && $this->viewingOrganizationId ? DeviceGroup::find($this->viewingOrganizationId) : null;
+        $additional = fn ($q) => $q->whereIn('devices.id', clone $visibleIds)
+            ->where(fn ($q) => $q->whereNull('devices.device_group_id')->orWhereColumn('devices.device_group_id', '!=', 'device_work_groups.device_group_id'));
+
         return view($this->deviceEditor ? 'livewire.device-editor-group' : 'livewire.group-list', [
-            'deviceGroups' => DeviceGroup::withCount('devices')->orderBy('name')->get(),
+            'deviceGroups' => DeviceGroup::withCount([
+                'devices' => fn ($q) => $q->whereIn('devices.id', clone $visibleIds),
+                'workDevices' => $additional,
+            ])->orderBy('name')->get(),
+            'viewedOrganization' => $organization,
+            'primaryDevices' => $organization ? $organization->devices()->whereIn('devices.id', clone $visibleIds)->orderBy('rustdesk_id')->get() : collect(),
+            'additionalDevices' => $organization ? $additional($organization->workDevices())->orderBy('rustdesk_id')->get() : collect(),
             'userGroups' => UserGroup::withCount('users')->with('deviceGroups')->orderBy('name')->get(),
             // The folder picker inside the editor offers only what save() would
             // accept from this actor; the lists above are the screen itself and

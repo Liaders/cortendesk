@@ -5,7 +5,7 @@ return [
     'administrators_see_every_device_and' => 'Les administrateurs voient tous les appareils et tous les paramètres de la console.',
     'console_sign_in_is_by' => 'La connexion à la console se fait par nom d’utilisateur : c’est vous qui le choisissez, pas la personne invitée.',
     'copy_link_now_it_is' => 'Copiez le lien maintenant : il n’est affiché qu’une seule fois et ne pourra pas être récupéré plus tard.',
-    'device_groups_they_may_access' => 'Groupes d’appareils accessibles',
+    'device_groups_they_may_access' => 'Accès aux organisations',
     'e_g_jsmith' => 'ex. jdupont',
     'email_is_not_configured_so' => 'L’e-mail n’est pas configuré, rien n’est donc envoyé : copiez le lien ci-dessous et transmettez-le vous-même (',
     'emailed_to' => 'Invitation envoyée par e-mail à :email.',

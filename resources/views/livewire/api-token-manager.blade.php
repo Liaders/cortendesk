@@ -3,7 +3,7 @@
         $resourceLabels = [
             'device' => __('common.devices'),
             'user' => __('common.users'),
-            'group' => __('common.groups'),
+            'group' => __('organizations.section'),
             'strategy' => __('common.strategies'),
             'address_book' => __('common.address_books_2'),
             'audit' => __('api_tokens.audit_logs'),

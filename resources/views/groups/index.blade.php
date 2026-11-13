@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', __('common.groups'))
+@section('title', __('organizations.section'))
 @section('subtitle', __('common.manage'))
 
 @section('content')

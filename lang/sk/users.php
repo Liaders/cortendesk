@@ -55,7 +55,7 @@ return [
     'sso_only' => 'Iba SSO',
     'standard_user' => 'Bežný používateľ',
     'this_user_has_not_signed' => 'Tento používateľ sa ešte neprihlásil v klientovi RustDesk.',
-    'this_user_sees_only_devices' => 'Používateľ uvidí iba vlastné zariadenia a zariadenia v skupinách vybraných nižšie.',
+    'this_user_sees_only_devices' => 'Prístup sa udeľuje k hlavným zariadeniam vybraných organizácií. Ďalšie priradenia na evidenciu času neudeľujú prístup.',
     'two_factor' => 'Dvojfaktorové overenie',
     'two_factor_authentication_enabled' => 'Dvojfaktorové overenie je zapnuté',
     'user_can_belong_to_several' => 'Používateľ môže patriť do viacerých skupín. Skupiny riadia zdieľanie adresárov a prístup ku skupinám zariadení.',

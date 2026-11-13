@@ -55,7 +55,7 @@ return [
     'sso_only' => 'Solo SSO',
     'standard_user' => 'Utente standard',
     'this_user_has_not_signed' => 'Questo utente non ha effettuato l\'accesso su un client RustDesk.',
-    'this_user_sees_only_devices' => 'Questo utente vede solo i dispositivi di cui è proprietario più quelli dei gruppi selezionati qui sotto.',
+    'this_user_sees_only_devices' => 'L’accesso è consentito ai dispositivi principali delle organizzazioni selezionate. Le assegnazioni aggiuntive per il conteggio del tempo non concedono accesso.',
     'two_factor' => 'Due fattori',
     'two_factor_authentication_enabled' => 'Autenticazione a due fattori attiva',
     'user_can_belong_to_several' => 'Un utente può appartenere a più gruppi. I gruppi controllano la condivisione delle rubriche e l\'accesso ai gruppi di dispositivi.',

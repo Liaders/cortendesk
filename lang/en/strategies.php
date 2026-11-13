@@ -37,7 +37,7 @@ return [
     'default_strategy' => 'Default strategy',
     'delete_strategy' => 'Delete strategy',
     'device_gets_one_strategy_its' => 'A device gets one strategy: its own assignment wins, then its owner\'s, then its device group\'s, then the default. Checking a target that already belongs to another strategy moves it here.',
-    'device_groups' => 'Device groups',
+    'device_groups' => 'Organizations',
     'direct_assignments_are_released_automati' => 'Direct assignments are released automatically.',
     'disabled_strategy_is_skipped_as' => 'A disabled strategy is skipped as if it were not assigned.',
     'duplicate' => 'Duplicate',

@@ -5,7 +5,7 @@ return [
     'administrators_see_every_device_and' => 'Administrátori vidia všetky zariadenia aj všetky nastavenia konzoly.',
     'console_sign_in_is_by' => 'Do konzoly sa prihlasuje používateľským menom, preto ho vyberáte vy, nie pozvaný používateľ.',
     'copy_link_now_it_is' => 'Odkaz skopírujte teraz. Zobrazí sa iba raz a neskôr ho už nebude možné získať.',
-    'device_groups_they_may_access' => 'Skupiny zariadení, ku ktorým môže pristupovať',
+    'device_groups_they_may_access' => 'Prístup k organizáciám',
     'e_g_jsmith' => 'napr. jnovak',
     'email_is_not_configured_so' => 'E-mail nie je nastavený, preto sa nič neodošle. Skopírujte odkaz nižšie a pošlite ho sami.',
     'emailed_to' => 'Pozvánka bola odoslaná na adresu :email.',

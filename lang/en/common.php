@@ -36,7 +36,7 @@ return [
     'delete' => 'Delete',
     'device' => 'Device',
     'device_access' => 'Device access',
-    'device_group' => 'Device group',
+    'device_group' => 'Organization',
     'devices' => 'Devices',
     'disabled' => 'Disabled',
     'dismiss' => 'Dismiss',
