@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\AuditController;
 use App\Http\Controllers\Api\ClientAuthController;
 use App\Http\Controllers\Api\ClientOidcController;
 use App\Http\Controllers\Api\GroupTabController;
+use App\Http\Controllers\Api\OrganizationsController;
 use App\Http\Controllers\Api\ServerLinkController;
 use App\Http\Controllers\Api\SessionWorkGroupController;
 use App\Http\Controllers\Api\SyncController;
@@ -69,6 +70,7 @@ Route::middleware('auth:client')->group(function () {
     Route::put('/audit', [AuditController::class, 'note']);
     Route::get('/audit/conn/active', [AuditController::class, 'activeConnection']);
     Route::get('/statusdesk/devices/{id}/work-groups', [SessionWorkGroupController::class, 'choices']);
+    Route::get('/statusdesk/organizations', [OrganizationsController::class, 'index']);
     Route::put('/statusdesk/sessions/{guid}/work-group', [SessionWorkGroupController::class, 'select']);
     Route::get('/statusdesk/sessions/{guid}/work-group', [SessionWorkGroupController::class, 'show']);
 
