@@ -10,6 +10,7 @@ use App\Models\ClientToken;
 use App\Models\Device;
 use App\Services\AppriseNotifications;
 use App\Services\ConnectionPath;
+use App\Services\SessionWorkGroups;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -105,15 +106,19 @@ class AuditController extends Controller
             }
 
             if ($open !== null) {
-                $open->update($attributes);
+                $open->fill($attributes);
+                SessionWorkGroups::snapshot($open);
+                $open->save();
             } else {
-                $open = AuditConnection::create($attributes + [
+                $open = new AuditConnection($attributes + [
                     'conn_id' => $connId,
                     'rustdesk_id' => $id,
                     'session_id' => $sessionId,
                     'uuid' => (string) $request->input('uuid', ''),
                     'ip' => $request->ip(),
                 ]);
+                SessionWorkGroups::snapshot($open);
+                $open->save();
             }
             ConnectionPath::refresh($open);
         });

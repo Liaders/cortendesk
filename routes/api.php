@@ -12,7 +12,9 @@ use App\Http\Controllers\Api\ClientAuthController;
 use App\Http\Controllers\Api\ClientOidcController;
 use App\Http\Controllers\Api\GroupTabController;
 use App\Http\Controllers\Api\ServerLinkController;
+use App\Http\Controllers\Api\SessionWorkGroupController;
 use App\Http\Controllers\Api\SyncController;
+use App\Http\Controllers\Api\WebClientController;
 use App\Http\Middleware\VerifyServerSecret;
 use Illuminate\Support\Facades\Route;
 
@@ -66,6 +68,9 @@ Route::middleware('auth:client')->group(function () {
     Route::post('/currentUser', [ClientAuthController::class, 'currentUser']);
     Route::put('/audit', [AuditController::class, 'note']);
     Route::get('/audit/conn/active', [AuditController::class, 'activeConnection']);
+    Route::get('/statusdesk/devices/{id}/work-groups', [SessionWorkGroupController::class, 'choices']);
+    Route::put('/statusdesk/sessions/{guid}/work-group', [SessionWorkGroupController::class, 'select']);
+    Route::get('/statusdesk/sessions/{guid}/work-group', [SessionWorkGroupController::class, 'show']);
 
     // Legacy address book (client < 1.2.6, Sciter)
     Route::get('/ab', [AddressBookController::class, 'legacyGet']);
@@ -87,7 +92,7 @@ Route::middleware('auth:client')->group(function () {
     Route::delete('/ab/tag/{guid}', [AddressBookController::class, 'tagDelete']);
 
     // Web client bootstrap (V1 static client served at /webclient/)
-    Route::match(['get', 'post'], '/server-config', [\App\Http\Controllers\Api\WebClientController::class, 'serverConfig']);
+    Route::match(['get', 'post'], '/server-config', [WebClientController::class, 'serverConfig']);
 
     // Group tab
     Route::get('/device-group/accessible', [GroupTabController::class, 'deviceGroups']);

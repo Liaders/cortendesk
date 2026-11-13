@@ -39,6 +39,7 @@
                                 </select>
                             </div>
                         </div>
+                        @include('livewire.partials.device-work-groups')
                         <div class="mb-3">
                             <label class="form-label">{{ __('common.note') }}</label>
                             <textarea class="form-control" rows="2" wire:model="formNote" maxlength="500"></textarea>

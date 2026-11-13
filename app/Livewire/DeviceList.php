@@ -584,7 +584,7 @@ class DeviceList extends Component
     {
         $this->authorizeConsole('device', 'rw');
 
-        $this->reset('formRustdeskId', 'formAlias', 'formNote', 'formGroupId', 'formUserId', 'formStrategyId');
+        $this->reset('formRustdeskId', 'formAlias', 'formNote', 'formGroupId', 'formWorkGroupIds', 'formUserId', 'formStrategyId');
         $this->formCanInitiate = ! DeviceEnrollment::newDevicesIncomingOnly();
         $this->editingId = 0;
     }

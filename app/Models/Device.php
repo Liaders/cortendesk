@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Device extends Model
@@ -93,6 +94,11 @@ class Device extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function workGroups(): BelongsToMany
+    {
+        return $this->belongsToMany(DeviceGroup::class, 'device_work_groups');
     }
 
     public function group(): BelongsTo

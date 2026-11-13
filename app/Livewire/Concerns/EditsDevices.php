@@ -8,6 +8,7 @@ use App\Models\DeviceGroup;
 use App\Models\Strategy;
 use App\Models\User;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 
@@ -73,6 +74,8 @@ trait EditsDevices
 
     public int $formGroupId = 0;
 
+    public array $formWorkGroupIds = [];
+
     public int $formUserId = 0;
 
     /** Device-level strategy assignment (PLAN C4). 0 = none, inherit. */
@@ -98,6 +101,7 @@ trait EditsDevices
         $this->formAlias = (string) $device->alias;
         $this->formNote = (string) $device->note;
         $this->formGroupId = (int) $device->device_group_id;
+        $this->formWorkGroupIds = $device->workGroups()->pluck('device_groups.id')->all();
         $this->formUserId = (int) $device->user_id;
         $this->formCanInitiate = ! $device->isIncomingOnly();
         // Only admins may see or set strategies; for everyone else the field
@@ -112,11 +116,14 @@ trait EditsDevices
     {
         $this->authorizeConsole('device', 'rw');
 
+        $existingWorkGroups = $this->editingId ? $this->scopedDevice($this->editingId)->workGroups()->pluck('device_groups.id')->all() : [];
         $data = $this->validate([
             'formRustdeskId' => 'required|string|max:100',
             'formAlias' => 'nullable|string|max:255',
             'formNote' => 'nullable|string|max:500',
             'formGroupId' => 'integer',
+            'formWorkGroupIds' => 'array|max:500',
+            'formWorkGroupIds.*' => ['integer', 'distinct', Rule::in(array_merge($this->accessibleDeviceGroups()->pluck('id')->all(), $existingWorkGroups))],
             'formUserId' => 'integer',
             'formStrategyId' => 'integer',
             'formCanInitiate' => 'boolean',
@@ -143,7 +150,7 @@ trait EditsDevices
 
                 return;
             }
-            Device::create($attributes + [
+            $device = Device::create($attributes + [
                 'rustdesk_id' => $data['formRustdeskId'],
                 'uuid' => '',
             ]);
@@ -164,8 +171,9 @@ trait EditsDevices
             $this->saveStrategyAssignment($device, (int) $data['formStrategyId']);
         }
 
+        $device->workGroups()->sync(array_values(array_diff(array_map('intval', $data['formWorkGroupIds']), [(int) $data['formGroupId']])));
         $this->editingId = null;
-        $this->reset('newGroupDialogOpen', 'groupCreationToken', 'createdEditorGroupIds');
+        $this->reset('newGroupDialogOpen', 'groupCreationToken', 'createdEditorGroupIds', 'formWorkGroupIds');
     }
 
     /**
@@ -205,7 +213,7 @@ trait EditsDevices
     public function closeModal(): void
     {
         $this->editingId = null;
-        $this->reset('newGroupDialogOpen', 'groupCreationToken', 'createdEditorGroupIds');
+        $this->reset('newGroupDialogOpen', 'groupCreationToken', 'createdEditorGroupIds', 'formWorkGroupIds');
     }
 
     /** Device groups this actor may see and therefore may choose. */
@@ -230,6 +238,7 @@ trait EditsDevices
 
         return [
             'editorGroups' => $open ? $this->accessibleDeviceGroups() : collect(),
+            'editorWorkGroups' => $open ? $this->accessibleDeviceGroups()->concat($this->editingId ? $this->scopedDevice($this->editingId)->workGroups : [])->unique('id')->sortBy('name') : collect(),
             'editorUsers' => $open ? User::orderBy('username')->get(['id', 'username']) : collect(),
             'strategies' => $this->editorStrategies(),
             'strategyExplain' => $this->editorStrategyExplain(),

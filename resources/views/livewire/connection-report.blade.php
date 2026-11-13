@@ -26,8 +26,17 @@
             </div></fieldset>
         @endforeach
         </div>
+        <div class="mt-3">
+            <label class="form-label" for="report-work-group">{{ __('work_groups.work_group') }}</label>
+            <select id="report-work-group" class="form-select" wire:model.live="workGroup">
+                <option value="">{{ __('report.all') }}</option>
+                <option value="unassigned">{{ __('work_groups.unassigned') }}</option>
+                @foreach ($workGroups as $group)<option value="{{ $group['id'] }}">{{ $group['name'] }}</option>@endforeach
+            </select>
+            @error('workGroup') <span class="text-danger">{{ $message }}</span> @enderror
+        </div>
         <details class="text-muted mt-3 mb-3"><summary>{{ __('report.method') }}</summary><p class="mt-2">{{ __('report.help', ['timezone' => config('app.timezone')]) }}</p>
-        <p>{{ __('report.attribution') }}</p></details>
+        <p>{{ __('work_groups.report_help') }}</p></details>
         <button class="btn btn-primary" wire:click="export" wire:loading.attr="disabled">{{ __('report.export') }}</button>
         <button class="btn btn-outline-primary ms-2" wire:click="exportXlsx" wire:loading.attr="disabled">{{ __('report.export_xlsx') }}</button>
         <p class="text-muted fs-13 mt-2 mb-0">{{ __('report.export_limit') }}</p>
@@ -38,7 +47,7 @@
         @endforeach
     </div>
     <div class="card"><div class="card-body"><h5>{{ __('report.customers') }}</h5>
-        <div class="table-responsive d-none d-md-block"><table class="table"><thead><tr><th>{{ __('report.device_group') }}</th><th>{{ __('report.sessions') }}</th><th>{{ __('report.duration') }}</th></tr></thead><tbody>
+        <div class="table-responsive d-none d-md-block"><table class="table"><thead><tr><th>{{ __('work_groups.work_group') }}</th><th>{{ __('report.sessions') }}</th><th>{{ __('report.duration') }}</th></tr></thead><tbody>
         @forelse ($breakdown as $group)<tr><td>{{ $group['name'] }}</td><td>{{ $group['count'] }}</td><td>{{ \App\Support\SessionTime::format($group['seconds']) }}</td></tr>@empty<tr><td colspan="3">{{ __('report.empty') }}</td></tr>@endforelse
         </tbody></table></div>
         <div class="d-md-none">
@@ -55,16 +64,17 @@
             <div class="rd-mini mb-2"><span class="rd-mini-title">{{ $operator['name'] }}</span><span class="rd-mini-sub">{{ $operator['count'] }} · {{ \App\Support\SessionTime::format($operator['seconds']) }}</span></div>
         @empty<p>{{ __('report.empty') }}</p>@endforelse
     </div></div></div>
-    <div class="card"><div class="card-body"><div class="table-responsive d-none d-md-block"><table class="table align-middle"><thead><tr><th>{{ __('report.from') }}</th><th>{{ __('report.to') }}</th><th>{{ __('report.start') }}</th><th>{{ __('report.end') }}</th><th>{{ __('report.seconds') }}</th><th>{{ __('report.note') }}</th></tr></thead><tbody>
+    <div class="card"><div class="card-body"><div class="table-responsive d-none d-md-block"><table class="table align-middle"><thead><tr><th>{{ __('report.from') }}</th><th>{{ __('report.to') }}</th><th>{{ __('work_groups.work_group') }}</th><th>{{ __('report.start') }}</th><th>{{ __('report.end') }}</th><th>{{ __('report.seconds') }}</th><th>{{ __('report.note') }}</th></tr></thead><tbody>
         @forelse ($rows as $row)
-            <tr wire:key="report-{{ $row->id }}"><td>{{ $row->from_peer }}<br><small>{{ $row->from_name }}</small></td><td>{{ $row->rustdesk_id }}<br><small>{{ $devices->get($row->rustdesk_id)?->alias }}</small></td><td>{{ $row->created_at }}</td><td>{{ $row->closed_at ?? '—' }}</td><td>{{ $row->closed_at ? \App\Support\SessionTime::format(max(0, min($end->timestamp, $row->closed_at->timestamp) - max($start->timestamp, $row->created_at->timestamp))) : '—' }}</td><td>{{ $row->note }}</td></tr>
-        @empty<tr><td colspan="6">{{ __('report.empty') }}</td></tr>@endforelse
+            <tr wire:key="report-{{ $row->id }}"><td>{{ $row->from_peer }}<br><small>{{ $row->from_name }}</small></td><td>{{ $row->rustdesk_id }}<br><small>{{ $devices->get($row->rustdesk_id)?->alias }}</small></td><td>{{ \App\Services\SessionWorkGroups::label($row) }}</td><td>{{ $row->created_at }}</td><td>{{ $row->closed_at ?? '—' }}</td><td>{{ $row->closed_at ? \App\Support\SessionTime::format(max(0, min($end->timestamp, $row->closed_at->timestamp) - max($start->timestamp, $row->created_at->timestamp))) : '—' }}</td><td>{{ $row->note }}</td></tr>
+        @empty<tr><td colspan="7">{{ __('report.empty') }}</td></tr>@endforelse
     </tbody></table></div>
     <div class="d-md-none">
         @forelse ($rows as $row)
             <div class="rd-mini mb-2" wire:key="report-mobile-{{ $row->id }}">
                 <span class="rd-mini-title">{{ $row->from_peer }} → {{ $row->rustdesk_id }}</span>
                 <span class="rd-mini-sub">{{ $row->from_name }} · {{ $devices->get($row->rustdesk_id)?->alias }}</span>
+                <span class="rd-mini-sub">{{ \App\Services\SessionWorkGroups::label($row) }}</span>
                 <span class="rd-mini-sub">{{ $row->created_at }} — {{ $row->closed_at ?? '—' }}</span>
                 <span class="rd-mini-sub">{{ $row->closed_at ? \App\Support\SessionTime::format(max(0, min($end->timestamp, $row->closed_at->timestamp) - max($start->timestamp, $row->created_at->timestamp))) : '—' }}</span>
                 @if ($row->note)<span class="rd-mini-sub">{{ $row->note }}</span>@endif
