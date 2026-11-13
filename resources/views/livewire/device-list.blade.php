@@ -29,7 +29,7 @@
             <span class="rd-chip-label">{{ __('devices.new_last_24_hours') }}</span>
         </button>
         <button type="button" class="rd-chip rd-chip-btn rd-tone-red @if(! $trashed && ! $pendingTab && $group === -1) rd-chip-active @endif"
-                style="border-color: var(--rd-red);" wire:click="toggleUngroupedDevices"
+                style="border-color: {{ ! $trashed && ! $pendingTab && $group === -1 ? 'var(--rd-red)' : 'var(--rd-border)' }};" wire:click="toggleUngroupedDevices"
                 aria-pressed="{{ ! $trashed && ! $pendingTab && $group === -1 ? 'true' : 'false' }}"
                 title="{{ __('devices.without_organization') }}">
             <i class="ri-folder-warning-line rd-chip-icon"></i>
