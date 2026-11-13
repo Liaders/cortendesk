@@ -27,16 +27,7 @@
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">{{ __('common.group') }}</label>
-                                <select class="form-select" wire:change="selectEditorGroup($event.target.value)">
-                                    <option value="0" @selected($formGroupId === 0)>{{ __('devices.no_group') }}</option>
-                                    @if (auth()->user()?->consoleAllows('group', 'rw'))
-                                        <option value="-1">{{ __('devices.create_new_group') }}</option>
-                                    @endif
-                                    @foreach ($editorGroups as $g)
-                                        <option value="{{ $g->id }}" @selected($formGroupId === $g->id)>{{ $g->name }}</option>
-                                    @endforeach
-                                </select>
+                                @include('livewire.partials.device-group-picker')
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">{{ __('devices.owner') }}</label>

@@ -61,6 +61,7 @@
     <script src="{{ \App\Support\Asset::url('assets/vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ \App\Support\Asset::url('assets/js/shell.js') }}"></script>
     <script src="{{ \App\Support\Asset::url('assets/js/cortendesk.js') }}"></script>
+    <script src="{{ \App\Support\Asset::url('assets/js/group-picker.js') }}"></script>
 
     @stack('scripts')
 </body>

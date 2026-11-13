@@ -62,7 +62,10 @@ it('allows delegated creation without granting visibility to other groups', func
 it('translates the creation option in every supported locale', function () {
     foreach (array_keys(User::LOCALES) as $locale) {
         $messages = require base_path('lang/'.$locale.'/devices.php');
-        expect($messages)->toHaveKey('create_new_group');
-        expect(trim($messages['create_new_group']))->not->toBe('');
+        foreach (['create_new_group', 'search_group', 'no_matching_groups'] as $key) {
+            expect($messages)->toHaveKey($key);
+            expect(trim($messages[$key]))->not->toBe('');
+        }
+        expect($messages['create_new_group'])->not->toStartWith('+');
     }
 });
