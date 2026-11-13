@@ -1,0 +1,79 @@
+name: Review upstream changes
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: Upstream branch to review (beta is an explicit opt-in)
+        type: choice
+        options: [main, beta]
+        default: main
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    if: github.repository == 'Liaders/cortendesk'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      changed: ${{ steps.merge.outputs.changed }}
+      revision: ${{ steps.merge.outputs.revision }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: codex/statusdesk-main
+          fetch-depth: 0
+      - id: merge
+        name: Prepare a review branch without changing the maintained branch
+        shell: bash
+        env:
+          SOURCE_BRANCH: ${{ inputs.source_branch }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          case "$SOURCE_BRANCH" in main|beta) ;; *) exit 1 ;; esac
+          git remote add upstream https://github.com/marcpope/cortendesk.git
+          git fetch upstream "$SOURCE_BRANCH"
+          source_sha=$(git rev-parse FETCH_HEAD)
+          if git merge-base --is-ancestor "$source_sha" HEAD; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            echo 'The maintained branch already includes this upstream revision.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          branch="codex/upstream-${SOURCE_BRANCH}-${GITHUB_RUN_ID}"
+          git switch -c "$branch"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if ! git merge --no-ff --no-edit "$source_sha"; then
+            printf '## Manual merge required\n\nSource: `%s` at `%s`.\n\nConflicted files:\n' "$SOURCE_BRANCH" "$source_sha" >> "$GITHUB_STEP_SUMMARY"
+            git diff --name-only --diff-filter=U >> "$GITHUB_STEP_SUMMARY"
+            echo 'The maintained branch has not changed.' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          SOURCE_SHA="$source_sha" python3 - <<'PY'
+          import json, os, pathlib
+          path = pathlib.Path('statusdesk-upstream.json')
+          data = json.loads(path.read_text())
+          data.update(branch=os.environ['SOURCE_BRANCH'], commit=os.environ['SOURCE_SHA'], version=pathlib.Path('VERSION').read_text().strip())
+          path.write_text(json.dumps(data, indent=2) + '\n')
+          PY
+          git add statusdesk-upstream.json
+          git commit -m "Record upstream ${SOURCE_BRANCH} baseline ${source_sha}"
+          git push origin "HEAD:refs/heads/$branch"
+          printf 'Review upstream `%s` at `%s`.\n\nResolve duplicate features in favor of the upstream implementation where practical. Check migrations and the container smoke test before merging. This workflow does not merge or deploy.\n\nValidation run: %s/%s/actions/runs/%s\n' "$SOURCE_BRANCH" "$source_sha" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > /tmp/upstream-pr.md
+          gh pr create --repo "$GITHUB_REPOSITORY" --base codex/statusdesk-main --head "$branch" --title "Review upstream ${SOURCE_BRANCH} updates" --body-file /tmp/upstream-pr.md
+          echo 'changed=true' >> "$GITHUB_OUTPUT"
+          echo "revision=$branch" >> "$GITHUB_OUTPUT"
+
+  verify:
+    needs: prepare
+    if: needs.prepare.outputs.changed == 'true'
+    uses: ./.github/workflows/statusdesk-ci.yml
+    with:
+      revision: ${{ needs.prepare.outputs.revision }}
+    permissions:
+      contents: read

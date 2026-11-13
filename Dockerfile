@@ -96,3 +96,11 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s \
     CMD wget -q -O /dev/null "http://127.0.0.1:${CORTENDESK_HTTP_PORT:-8080}/health/live" || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
+
+# StatusDesk distribution metadata; retain VERSION for upstream comparisons.
+ARG STATUSDESK_VERSION=development
+ENV APP_NAME="StatusDesk Console"
+LABEL org.opencontainers.image.title="StatusDesk Console" \
+      org.opencontainers.image.source="https://github.com/Liaders/cortendesk" \
+      org.opencontainers.image.version="${STATUSDESK_VERSION}" \
+      org.opencontainers.image.description="StatusDesk Console, based on CortenDesk"

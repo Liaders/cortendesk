@@ -3,6 +3,8 @@
     <testsuites><testsuite name="Feature"><directory>tests/Feature</directory></testsuite></testsuites>
     <php>
         <env name="APP_ENV" value="testing" force="true"/>
+        <env name="APP_KEY" value="base64:eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHg=" force="true"/>
+        <env name="BCRYPT_ROUNDS" value="4" force="true"/>
         <env name="DB_CONNECTION" value="sqlite" force="true"/>
         <env name="DB_DATABASE" value=":memory:" force="true"/>
         <env name="CACHE_STORE" value="array" force="true"/>

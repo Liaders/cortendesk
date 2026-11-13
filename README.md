@@ -1,3 +1,5 @@
+> **StatusDesk Console distribution:** this maintained branch includes our additions and update workflow. See [STATUSDESK.md](STATUSDESK.md) and [the Russian operator guide](docs/STATUSDESK_RU.md). Based on CortenDesk; upstream credits and license are retained.
+
 # CortenDesk
 
 **A complete, self-hosted drop-in replacement for the open-source RustDesk server — ID server, relay and professional console in one image, with a fully native in-browser remote desktop client.**

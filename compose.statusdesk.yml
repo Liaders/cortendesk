@@ -1,0 +1,21 @@
+name: statusdesk-console
+services:
+  console:
+    image: ${STATUSDESK_IMAGE:?Set a verified image digest in STATUSDESK_IMAGE}
+    container_name: statusdesk-console
+    restart: unless-stopped
+    environment:
+      APP_NAME: StatusDesk Console
+      APP_URL: ${APP_URL:?Set the public URL in APP_URL}
+      APP_ENV: production
+      APP_DEBUG: 'false'
+    ports:
+      - '127.0.0.1:${STATUSDESK_HTTP_PORT:-8080}:8080'
+      - '${STATUSDESK_ID_NAT_PORT:-21115}:21115'
+      - '${STATUSDESK_ID_PORT:-21116}:21116'
+      - '${STATUSDESK_ID_PORT:-21116}:21116/udp'
+      - '${STATUSDESK_RELAY_PORT:-21117}:21117'
+    volumes:
+      - statusdesk-data:/data
+volumes:
+  statusdesk-data:

@@ -42,3 +42,10 @@ docker-compose.override.yml
 *.dump
 /storage/app/*.db
 /storage/app/*.sqlite
+
+# Private StatusDesk deployment state never belongs in the distribution.
+/.env.statusdesk
+/statusdesk-private/
+/artifacts/
+*.ppk
+*.pem
