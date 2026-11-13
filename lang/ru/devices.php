@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'without_organization' => 'Без привязки к организации',
     'new_last_24_hours' => 'Новые за 24 часа',
     'registered_last_24_hours' => 'Впервые зарегистрировано за последние 24 часа',
     'new_device_badge' => 'Новое',

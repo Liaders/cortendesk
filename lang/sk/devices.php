@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'without_organization' => 'Bez priradenej organizácie',
     'new_last_24_hours' => 'Nové za 24 hodín',
     'registered_last_24_hours' => 'Prvýkrát zaregistrované za posledných 24 hodín',
     'new_device_badge' => 'Nové',

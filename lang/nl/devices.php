@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'without_organization' => 'Zonder organisatietoewijzing',
     'new_last_24_hours' => 'Nieuw in 24 uur',
     'registered_last_24_hours' => 'Voor het eerst geregistreerd in de afgelopen 24 uur',
     'new_device_badge' => 'Nieuw',

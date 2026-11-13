@@ -283,6 +283,16 @@ class DeviceList extends Component
         $this->clearSelection();
     }
 
+    public function toggleUngroupedDevices(): void
+    {
+        $active = ! $this->trashed && ! $this->pendingTab && $this->group === -1;
+        $this->group = $active ? 0 : -1;
+        $this->trashed = false;
+        $this->pendingTab = false;
+        $this->resetPage();
+        $this->clearSelection();
+    }
+
     public function updatedGroup(): void
     {
         $this->resetPage();
@@ -689,6 +699,7 @@ class DeviceList extends Component
             'deleteState' => $this->deleteConfirmState(),
             'totalCount' => Device::visibleTo($user)->count(),
             'newCount' => Device::visibleTo($user)->newlyRegistered()->count(),
+            'ungroupedCount' => Device::visibleTo($user)->whereNull('device_group_id')->count(),
             'onlineCount' => Device::visibleTo($user)->online()->count(),
             'trashedCount' => Device::visibleWithTrashed($user)->onlyTrashed()->count(),
             'pendingCount' => $pendingCount,

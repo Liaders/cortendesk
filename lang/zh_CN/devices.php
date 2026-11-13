@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'without_organization' => '未关联组织',
     'new_last_24_hours' => '24 小时内新增',
     'registered_last_24_hours' => '在过去 24 小时内首次注册',
     'new_device_badge' => '新增',

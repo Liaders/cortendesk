@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'without_organization' => 'Nincs szervezethez rendelve',
     'new_last_24_hours' => 'Új az elmúlt 24 órában',
     'registered_last_24_hours' => 'Először regisztrálva az elmúlt 24 órában',
     'new_device_badge' => 'Új',

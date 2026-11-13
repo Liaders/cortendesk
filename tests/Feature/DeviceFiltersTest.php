@@ -40,13 +40,23 @@ it('combines no-group, recent, owner and presence filters without widening visib
     $this->actingAs($viewer);
     Livewire::test(DeviceList::class)->set('selected', ['999'])->set('group', -1)
         ->assertSet('selected', [])->call('toggleNewDevices')->set('status', 'online')
-        ->assertViewHas('devices', fn ($rows) => $rows->pluck('rustdesk_id')->all() === ['mine']);
+        ->assertViewHas('devices', fn ($rows) => $rows->pluck('rustdesk_id')->all() === ['mine'])
+        ->assertViewHas('ungroupedCount', 1)
+        ->assertSee(__('devices.without_organization'))
+        ->call('toggleUngroupedDevices')->assertSet('group', 0)
+        ->assertViewHas('devices', fn ($rows) => $rows->pluck('rustdesk_id')->sort()->values()->all() === ['grouped', 'mine'])
+        ->set('selected', ['999'])->set('group', $group->id)->set('paginators.page', 2)
+        ->call('toggleUngroupedDevices')->assertSet('group', -1)->assertSet('selected', [])->assertSet('paginators.page', 1)
+        ->assertViewHas('devices', fn ($rows) => $rows->pluck('rustdesk_id')->all() === ['mine'])
+        ->set('trashed', true)->call('toggleUngroupedDevices')->assertSet('group', -1)->assertSet('trashed', false)
+        ->set('pendingTab', true)->call('toggleUngroupedDevices')->assertSet('group', -1)->assertSet('pendingTab', false)
+        ->call('resetFilters')->assertSet('group', 0);
 });
 
 it('translates every new device filter label in all supported locales', function () {
     foreach (array_keys(User::LOCALES) as $locale) {
         $messages = require base_path('lang/'.$locale.'/devices.php');
-        foreach (['new_last_24_hours', 'registered_last_24_hours', 'new_device_badge', 'no_group'] as $key) {
+        foreach (['new_last_24_hours', 'registered_last_24_hours', 'new_device_badge', 'no_group', 'without_organization'] as $key) {
             expect($messages)->toHaveKey($key);
             expect(trim($messages[$key]))->not->toBe('');
         }

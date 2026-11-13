@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'without_organization' => 'Senza organizzazione assegnata',
     'new_last_24_hours' => 'Nuovi nelle ultime 24 ore',
     'registered_last_24_hours' => 'Registrato per la prima volta nelle ultime 24 ore',
     'new_device_badge' => 'Nuovo',
