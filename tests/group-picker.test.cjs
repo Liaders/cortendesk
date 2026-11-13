@@ -67,3 +67,18 @@ test('prevents duplicate selections while the server is processing a request', a
     await first;
     assert.equal(state.pending, false);
 });
+
+test('scrolls the active option rather than the Alpine template element', () => {
+    const {state} = picker();
+    let revealed;
+    state.$refs.options = {querySelectorAll(selector) {
+        assert.equal(selector, '[role="option"]');
+        return state.choices.map((group, index) => ({scrollIntoView() { revealed = index; }}));
+    }};
+    state.show();
+    assert.equal(revealed, state.active);
+    state.search('missing');
+    state.move(-1);
+    assert.equal(state.active, 1);
+    assert.equal(revealed, 1);
+});

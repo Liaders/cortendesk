@@ -33,11 +33,13 @@ window.rdGroupPicker = function (wire, groups, noGroup, newGroup, canCreate) {
         },
         move(direction) {
             if (!this.open) { this.show(); return; }
-            this.active = (this.active + direction + this.choices.length) % this.choices.length;
+            this.active = this.active < 0
+                ? (direction > 0 ? 0 : this.choices.length - 1)
+                : (this.active + direction + this.choices.length) % this.choices.length;
             this.reveal();
         },
         reveal() {
-            this.$nextTick(() => this.$refs.options?.children[this.active]?.scrollIntoView({block: 'nearest'}));
+            this.$nextTick(() => this.$refs.options?.querySelectorAll('[role="option"]')[this.active]?.scrollIntoView({block: 'nearest'}));
         },
         async choose(id) {
             if (this.pending) return;
