@@ -74,3 +74,4 @@ jobs:
       revision: ${{ needs.prepare.outputs.revision }}
     permissions:
       contents: read
+      packages: write
