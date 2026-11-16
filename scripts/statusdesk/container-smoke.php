@@ -18,12 +18,9 @@ if ($response->getStatusCode() !== 200 || ! str_contains($response->getContent()
 $report = new ConnectionReport;
 $report->mount();
 ob_start();
-$report->export()->sendContent();
-$csv = ob_get_clean();
-ob_start();
 $report->exportXlsx()->sendContent();
 $xlsx = ob_get_clean();
-if (! str_contains($csv, 'From ID') || ! str_starts_with($xlsx, 'PK')) {
+if (! str_starts_with($xlsx, 'PK')) {
     throw new RuntimeException('A report export failed.');
 }
-echo "Authenticated report and CSV/XLSX checks passed.\n";
+echo "Authenticated report and XLSX checks passed.\n";

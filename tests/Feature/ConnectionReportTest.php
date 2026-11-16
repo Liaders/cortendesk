@@ -6,6 +6,7 @@ use App\Models\Device;
 use App\Models\Role;
 use App\Models\User;
 use App\Support\SessionTime;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -28,8 +29,8 @@ it('counts only signed-in sessions and clips time to inclusive selected dates', 
         [null, '2020-01-02 12:00:00', '2020-01-02 13:00:00'],
         ['', '2020-01-02 12:00:00', '2020-01-02 13:00:00'],
     ] as [$from, $start, $end]) {
-        $row = new AuditConnection(['rustdesk_id' => 'target', 'from_peer' => $from, 'closed_at' => $end]);
-        $row->created_at = $start;
+        $row = new AuditConnection(['rustdesk_id' => 'target', 'from_peer' => $from, 'closed_at' => $end ? CarbonImmutable::parse($end, '+03:00')->setTimezone('UTC') : null]);
+        $row->created_at = CarbonImmutable::parse($start, '+03:00')->setTimezone('UTC');
         $row->save();
     }
     Livewire::test(ConnectionReport::class)->set('dateFrom', '2020-01-02')->set('dateTo', '2020-01-02')
@@ -44,7 +45,8 @@ it('shows a date field error without breaking the rendered page', function () {
         ->set('dateTo', '2020-01-03')->assertHasNoErrors();
 });
 
-it('limits CSV and XLSX to 10000 sessions and describes truncation in the workbook', function () {
+it('limits XLSX to 10000 sessions and describes truncation in the workbook', function () {
+    Device::where('rustdesk_id', 'source')->update(['user_id' => null]);
     $row = ['rustdesk_id' => 'target', 'from_peer' => 'source', 'from_name' => '=1+1', 'note' => '<f>1+1</f>', 'created_at' => '2020-01-02 00:00:00', 'closed_at' => '2020-01-02 00:01:00'];
     for ($i = 0; $i < 20; $i++) {
         DB::table('audit_connections')->insert(array_fill(0, 500, $row));
@@ -54,10 +56,6 @@ it('limits CSV and XLSX to 10000 sessions and describes truncation in the workbo
     $report->dateFrom = '2020-01-02';
     $report->dateTo = '2020-01-02';
     expect($report->render()->getData()['count'])->toBe(10001);
-    ob_start();
-    $report->export()->sendContent();
-    $csv = ob_get_clean();
-    expect(substr_count($csv, "\n"))->toBe(10001);
     ob_start();
     $report->exportXlsx()->sendContent();
     $bytes = ob_get_clean();
@@ -71,7 +69,7 @@ it('limits CSV and XLSX to 10000 sessions and describes truncation in the workbo
         expect($details->getElementsByTagName('row')->length)->toBe(10001);
         expect($details->getElementsByTagName('f')->length)->toBe(0);
         $strings = $zip->getFromName('xl/sharedStrings.xml');
-        expect($strings)->toContain('Export truncated', 'Yes: first 10000', '&lt;f&gt;1+1&lt;/f&gt;', '=1+1');
+        expect($strings)->toContain(__('report.truncated'), __('report.truncated_yes'), '&lt;f&gt;1+1&lt;/f&gt;', '=1+1');
         expect($zip->getFromName('xl/styles.xml'))->toContain('[h]:mm:ss');
     } finally {
         $zip->close();
@@ -87,7 +85,7 @@ it('keeps device visibility and rejects report exports after permission revocati
     Livewire::test(ConnectionReport::class)->assertViewHas('count', 0);
     $role->update(['permissions' => []]);
     $this->actingAs($viewer->fresh());
-    foreach (['export', 'exportXlsx'] as $method) {
+    foreach (['exportXlsx'] as $method) {
         try {
             (new ConnectionReport)->$method();
             $this->fail('An unauthorized export was accepted.');

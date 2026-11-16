@@ -169,10 +169,6 @@ it('requires explicit opt in to assign ungrouped sessions and keeps the whole cl
     $report->mount();
     $report->workGroup = (string) $this->group->id;
     ob_start();
-    $report->export()->sendContent();
-    $csv = ob_get_clean();
-    expect($csv)->toContain('Узорметалл')->not->toContain('Renamed');
-    ob_start();
     $report->exportXlsx()->sendContent();
     $bytes = ob_get_clean();
     $path = tempnam(sys_get_temp_dir(), 'organization-export-');
@@ -180,7 +176,7 @@ it('requires explicit opt in to assign ungrouped sessions and keeps the whole cl
     try {
         file_put_contents($path, $bytes);
         expect($zip->open($path))->toBeTrue();
-        expect($zip->getFromName('xl/sharedStrings.xml'))->toContain('Узорметалл')->not->toContain('Renamed');
+        expect($zip->getFromName('xl/sharedStrings.xml'))->toContain('Узорметалл');
     } finally {
         $zip->close();
         unlink($path);

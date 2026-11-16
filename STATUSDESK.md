@@ -6,12 +6,12 @@ The maintained branch is `codex/statusdesk-main`. `main` remains an unmodified u
 
 ## Included additions
 
-- Connection time reports with source/target filters, interval clipping, time without overlaps per operator, and CSV/XLSX export. Only authenticated sessions count; exports stop at 10,000 sessions, with an XLSX truncation notice and totals for the exported subset. Invalid dates show a field error. Reports retain the current-ownership/current-membership limitations explained in the UI.
+- Connection time reports with dependent source/target device filters, saved work-organization attribution, interval clipping, time without overlaps per operator, and localized XLSX export. Only authenticated sessions count; exports stop at 10,000 sessions, with a truncation notice and totals for the exported subset. Reports use GMT+3 date boundaries and readable filter summaries, operator display names and device aliases. Invalid dates show a field error. Reports retain the current-ownership and legacy-attribution limitations explained in the UI. Connection-report CSV export has been removed; other log exports are unchanged.
 - Recently registered devices (24 hours), badges on desktop and phone layouts, and a No group filter.
 - Device-group creation from the shared device editor, reusing the existing dialog and preserving unsaved device fields and permission checks.
 - Current device aliases beneath IDs in connection, file-transfer and alarm logs, with eager loading and viewer scoping.
 - Client Bearer APIs for organization search, permitted creation, idempotent device attachment and atomic first attribution of an ungrouped session. Confirmed attribution remains immutable; additional organizations never grant device access. Client alias read/write preserves the machine hostname. See [the client contract](docs/session-work-groups.md).
-- All new interface labels cover all 12 supported locales. CSV/XLSX export headings are English, consistent with existing log exports.
+- All new interface labels and connection-report workbook headings/sheet names cover all 12 supported locales. Existing unrelated log exports retain their original language behavior.
 
 The temporary report image previously prepared separately is not the same as an image built from this branch. Adopting this distribution on an existing installation is a separate, tested migration; CI never connects to a production server.
 

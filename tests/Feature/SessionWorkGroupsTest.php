@@ -150,7 +150,6 @@ it('filters and exports recorded work groups separately from physical device gro
     workSession(['session_id' => '789']);
     $this->actingAs($this->admin);
     Livewire::test(ConnectionReport::class)->assertViewHas('count', 3)
-        ->set('target.device_group_id', (string) $this->mainGroup->id)->assertViewHas('count', 3)
         ->set('workGroup', (string) $this->customer->id)->assertViewHas('count', 1)
         ->assertViewHas('total', 3600)
         ->assertViewHas('breakdown', fn ($rows) => array_values($rows)[0]['name'] === 'Customer A')
@@ -160,11 +159,6 @@ it('filters and exports recorded work groups separately from physical device gro
     $report->workGroup = 'unassigned';
     app()->setLocale('ru');
     ob_start();
-    $report->export()->sendContent();
-    $csv = ob_get_clean();
-    expect($csv)->toContain('Work group', 'Organization not selected');
-    expect($csv)->not->toContain('Customer A');
-    ob_start();
     $report->exportXlsx()->sendContent();
     $bytes = ob_get_clean();
     $path = tempnam(sys_get_temp_dir(), 'work-groups-xlsx-');
@@ -172,7 +166,7 @@ it('filters and exports recorded work groups separately from physical device gro
     try {
         file_put_contents($path, $bytes);
         expect($zip->open($path))->toBeTrue();
-        expect($zip->getFromName('xl/sharedStrings.xml'))->toContain('Work group', 'Organization not selected');
+        expect($zip->getFromName('xl/sharedStrings.xml'))->toContain('Организация учёта времени', 'Организация не выбрана');
     } finally {
         $zip->close();
         unlink($path);

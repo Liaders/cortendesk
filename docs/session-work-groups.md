@@ -191,7 +191,7 @@ The existing PUT accepts an optional flag:
 - Success remains 200 `{saved: true}`; reread session GET for its confirmed snapshot. A separate `request_id` is unnecessary: the exact GUID plus immutable assignment is the idempotency boundary.
 - A device token must still exactly match `from_peer`, and the target must still be visible. A missing device ID in the token returns 403; an unknown/mismatched GUID or invisible target returns 404.
 
-Before intentional disconnect, a new client may offer the same organization picker/create flow for an unassigned device/session. Save and await success before disconnecting; alternatively allow explicit disconnect without assignment or return to the session. Network/process failure cannot guarantee this prompt or persistence. Both existing report formats and the web report read the same saved snapshot via `SessionWorkGroups::label`; the v2 path introduces no separate report attribution source. Changes to report localization/presentation remain a separate planned increment.
+Before intentional disconnect, a new client may offer the same organization picker/create flow for an unassigned device/session. Save and await success before disconnecting; alternatively allow explicit disconnect without assignment or return to the session. Network/process failure cannot guarantee this prompt or persistence. The XLSX export and web report read the same saved snapshot via `SessionWorkGroups::label`; the v2 path introduces no separate report attribution source.
 
 ### Errors and rollout
 
@@ -254,7 +254,15 @@ Errors: 401 for missing/invalid/expired client token or inactive account; 403 fo
 
 ## Report and exports
 
-The existing target group filter continues to describe the physical device's current primary group. A separate **Work organization** filter describes attribution. The summary groups sessions by recorded work-group id; **Organization not selected** remains separate from ungrouped devices. CSV and XLSX add a Work group column; exported system labels remain English. Scope, date clipping, overlap calculations and the 10,000-session export cap are preserved.
+The **Connected to** filter block contains one **Work organization** selector; there is no duplicate standalone organization control or target-primary-group selector. The **Who connected** block retains the source device's primary organization. Device dropdowns follow the selected organization and owner filters; changing a filter clears an incompatible device choice. Target candidates include primary/additional membership and visible devices with recorded historical sessions for the selected organization, so later reassignment or deletion of a group does not make historical records impossible to select. These candidates never grant visibility.
+
+Session filtering uses the audit's saved work-group ID, **not** just device membership. Current membership in organization A does not charge sessions saved for B to A. Legacy rows retain their documented current-primary-group fallback; no attribution is invented or backfilled. The organization summary uses saved group IDs/names. **Organization not selected** remains separate from ungrouped devices. Unknown/unavailable filter IDs are never resolved through unscoped catalog queries.
+
+The report uses fixed **GMT+3 / UTC+03:00** for displayed timestamps, month presets and inclusive selected-date boundaries. The query converts boundaries to the existing application/storage timezone; database storage and other pages' timezones are unchanged. Human date input/output is `1.11.2026`; older ISO component state is accepted for compatibility. Time is `09:05:07`. Durations remain elapsed time, including hours beyond 24.
+
+Connection-report export is **XLSX only**; its CSV action and label have been removed. Other logs' exports are unchanged. Workbook sheets, headings, status/type labels and filter summaries use the active Console locale, including all 12 supported languages. Summaries show names instead of JSON and explicit All organizations/owners/devices when unrestricted. User labels prefer current owners' display names, then usernames; unknown/unowned sources fall back to recorded client name or source ID. Operator grouping remains by owner ID/source device ID, so identical names do not merge employees. This is current ownership, not proof of the signed-in human operator.
+
+Destination labels are `Alias (RustDesk ID)`, or the ID alone. IDs stay text. Workbook dates/counts/durations remain typed with `d.m.yyyy`, `d.m.yyyy hh:mm:ss` and `[h]:mm:ss` formats; summary values are left-aligned. Client-provided text is literal and cannot create formulas or hyperlinks. Scope, clipping, overlap calculations, active-session exclusion and the 10,000-session cap are preserved; the workbook explains truncation and totals describe the exported subset.
 
 ## Deployment and rollback
 

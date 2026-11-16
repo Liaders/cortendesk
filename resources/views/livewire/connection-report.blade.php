@@ -1,45 +1,62 @@
 <div>
     <div class="card"><div class="card-body">
         <div class="row g-3 mb-3">
-            <div class="col-md-4"><label class="form-label" for="report-from">{{ __('report.date_from') }}</label><input id="report-from" type="date" class="form-control" wire:model.live="dateFrom">@error('dateFrom')<span class="text-danger">{{ $message }}</span>@enderror</div>
-            <div class="col-md-4"><label class="form-label" for="report-to">{{ __('report.date_to') }}</label><input id="report-to" type="date" class="form-control" wire:model.live="dateTo">@error('dateTo')<span class="text-danger">{{ $message }}</span>@enderror</div>
+            <div class="col-md-4"><label class="form-label" for="report-from">{{ __('report.date_from') }}</label><input id="report-from" type="text" inputmode="numeric" placeholder="1.11.2026" class="form-control" wire:model.live.debounce.500ms="dateFrom" aria-describedby="report-date-hint">@error('dateFrom')<span class="text-danger">{{ $message }}</span>@enderror</div>
+            <div class="col-md-4"><label class="form-label" for="report-to">{{ __('report.date_to') }}</label><input id="report-to" type="text" inputmode="numeric" placeholder="30.11.2026" class="form-control" wire:model.live.debounce.500ms="dateTo" aria-describedby="report-date-hint">@error('dateTo')<span class="text-danger">{{ $message }}</span>@enderror</div>
             <div class="col-md-4 d-flex align-items-end gap-2"><button class="btn btn-outline-primary" wire:click="period('this')">{{ __('report.this_month') }}</button><button class="btn btn-outline-primary" wire:click="period('last')">{{ __('report.last_month') }}</button></div>
         </div>
+        <p class="text-muted fs-13" id="report-date-hint">{{ __('report.date_hint') }} · {{ \App\Livewire\ConnectionReport::TIMEZONE_LABEL }}</p>
         <div class="row g-3">
         @foreach (['source' => __('report.from'), 'target' => __('report.to')] as $side => $label)
             <fieldset class="col-md-6"><legend class="fs-5">{{ $label }}</legend><div class="row">
+                @if ($side === 'target')
+                    <div class="col-sm-6"><label class="form-label mt-2" for="report-work-group">{{ __('work_groups.work_group') }}</label>
+                        <select id="report-work-group" class="form-select" wire:model.live="workGroup">
+                            <option value="">{{ __('report.all_organizations') }}</option>
+                            <option value="unassigned">{{ __('work_groups.unassigned') }}</option>
+                            @foreach ($workGroups as $group)<option value="{{ $group['id'] }}">{{ $group['name'] }}</option>@endforeach
+                        </select>
+                        @error('workGroup')<span class="text-danger">{{ $message }}</span>@enderror
+                    </div>
+                @endif
                 @foreach (['device_group_id' => __('report.device_group'), 'user_id' => __('report.user'), 'user_group_id' => __('report.user_group'), 'rustdesk_id' => __('report.device')] as $field => $caption)
+                    @continue($side === 'target' && $field === 'device_group_id')
                     <div class="col-sm-6"><label class="form-label mt-2" for="{{ $side }}-{{ $field }}">{{ $caption }}</label>
                     <select id="{{ $side }}-{{ $field }}" class="form-select" wire:model.live="{{ $side }}.{{ $field }}">
-                        <option value="">{{ __('report.all') }}</option>
+                        <option value="">{{ $field === 'device_group_id' ? __('report.all_organizations') : __('report.all_'.(['user_id' => 'user', 'user_group_id' => 'user_group', 'rustdesk_id' => 'device'][$field])) }}</option>
                         @if ($field === 'device_group_id')
                             @foreach ($devices->pluck('group')->filter()->unique('id')->sortBy('name') as $group)<option value="{{ $group->id }}">{{ $group->name }}</option>@endforeach
                         @elseif ($field === 'user_id')
-                            @foreach ($devices->pluck('user')->filter()->unique('id')->sortBy('username') as $user)<option value="{{ $user->id }}">{{ $user->username }}</option>@endforeach
+                            @foreach ($devices->pluck('user')->filter()->unique('id')->sortBy(fn ($user) => trim((string) $user->name) ?: $user->username) as $user)<option value="{{ $user->id }}">{{ trim((string) $user->name) ?: $user->username }}</option>@endforeach
                         @elseif ($field === 'user_group_id')
                             @foreach ($devices->pluck('user')->filter()->flatMap(fn ($user) => $user->groups)->unique('id')->sortBy('name') as $group)<option value="{{ $group->id }}">{{ $group->name }}</option>@endforeach
                         @else
-                            @foreach ($devices->sortBy('rustdesk_id') as $device)<option value="{{ $device->rustdesk_id }}">{{ $device->alias ?: $device->hostname ?: $device->rustdesk_id }} ({{ $device->rustdesk_id }})</option>@endforeach
+                            @foreach ($side === 'source' ? $sourceDevices : $targetDevices as $device)<option value="{{ $device->rustdesk_id }}">{{ \App\Support\ConnectionReportPresentation::device($device) }}</option>@endforeach
                         @endif
                     </select></div>
                 @endforeach
             </div></fieldset>
         @endforeach
         </div>
-        <div class="mt-3">
-            <label class="form-label" for="report-work-group">{{ __('work_groups.work_group') }}</label>
-            <select id="report-work-group" class="form-select" wire:model.live="workGroup">
-                <option value="">{{ __('report.all') }}</option>
-                <option value="unassigned">{{ __('work_groups.unassigned') }}</option>
-                @foreach ($workGroups as $group)<option value="{{ $group['id'] }}">{{ $group['name'] }}</option>@endforeach
-            </select>
-            @error('workGroup') <span class="text-danger">{{ $message }}</span> @enderror
-        </div>
-        <details class="text-muted mt-3 mb-3"><summary>{{ __('report.method') }}</summary><p class="mt-2">{{ __('report.help', ['timezone' => config('app.timezone')]) }}</p>
-        <p>{{ __('work_groups.report_help') }}</p></details>
-        <button class="btn btn-primary" wire:click="export" wire:loading.attr="disabled">{{ __('report.export') }}</button>
-        <button class="btn btn-outline-primary ms-2" wire:click="exportXlsx" wire:loading.attr="disabled">{{ __('report.export_xlsx') }}</button>
+        <details class="text-muted mt-3 mb-3"><summary>{{ __('report.method') }}</summary><p class="mt-2">{{ __('report.help', ['timezone' => \App\Livewire\ConnectionReport::TIMEZONE_LABEL]) }}</p>
+        <p>{{ __('report.attribution') }}</p><p>{{ __('work_groups.report_help') }}</p></details>
+        <button class="btn btn-primary" wire:click="exportXlsx" wire:loading.attr="disabled">{{ __('report.export_xlsx') }}</button>
         <p class="text-muted fs-13 mt-2 mb-0">{{ __('report.export_limit') }}</p>
+    </div></div>
+    <div class="card"><div class="card-body">
+        <h5>{{ __('report.sheet_summary') }}</h5>
+        <p class="text-muted mb-3">{{ $dateFrom }} — {{ $dateTo }} · {{ \App\Livewire\ConnectionReport::TIMEZONE_LABEL }}</p>
+        <div class="row g-3">
+            @foreach (['source' => __('report.from'), 'target' => __('report.to')] as $side => $label)
+                <div class="col-md-6"><h6>{{ $label }}</h6><dl class="row mb-0">
+                    @foreach ($filterSummary as $filter)
+                        @continue($filter['label'] !== $label && ! str_starts_with($filter['label'], $label.' · '))
+                        @php($caption = $filter['label'] === $label ? ($side === 'source' ? __('report.device_group') : __('work_groups.work_group')) : substr($filter['label'], strlen($label.' · ')))
+                        <dt class="col-sm-5 fw-normal text-muted mb-2">{{ $caption }}</dt><dd class="col-sm-7 mb-2">{{ $filter['value'] }}</dd>
+                    @endforeach
+                </dl></div>
+            @endforeach
+        </div>
     </div></div>
     <div class="row g-3 mb-3">
         @foreach ([__('report.sessions') => $count, __('report.duration') => \App\Support\SessionTime::format($total), __('report.unique') => \App\Support\SessionTime::format($unique), __('report.active') => $active] as $label => $value)
@@ -64,18 +81,18 @@
             <div class="rd-mini mb-2"><span class="rd-mini-title">{{ $operator['name'] }}</span><span class="rd-mini-sub">{{ $operator['count'] }} · {{ \App\Support\SessionTime::format($operator['seconds']) }}</span></div>
         @empty<p>{{ __('report.empty') }}</p>@endforelse
     </div></div></div>
-    <div class="card"><div class="card-body"><div class="table-responsive d-none d-md-block"><table class="table align-middle"><thead><tr><th>{{ __('report.from') }}</th><th>{{ __('report.to') }}</th><th>{{ __('work_groups.work_group') }}</th><th>{{ __('report.start') }}</th><th>{{ __('report.end') }}</th><th>{{ __('report.seconds') }}</th><th>{{ __('report.note') }}</th></tr></thead><tbody>
+    <div class="card"><div class="card-body"><h5>{{ __('report.sheet_sessions') }}</h5><div class="table-responsive d-none d-md-block"><table class="table align-middle"><thead><tr><th>{{ __('report.from') }}</th><th>{{ __('report.to_device') }}</th><th>{{ __('work_groups.work_group') }}</th><th>{{ __('report.start') }}</th><th>{{ __('report.end') }}</th><th>{{ __('report.seconds') }}</th><th>{{ __('report.note') }}</th></tr></thead><tbody>
         @forelse ($rows as $row)
-            <tr wire:key="report-{{ $row->id }}"><td>{{ $row->from_peer }}<br><small>{{ $row->from_name }}</small></td><td>{{ $row->rustdesk_id }}<br><small>{{ $devices->get($row->rustdesk_id)?->alias }}</small></td><td>{{ \App\Services\SessionWorkGroups::label($row) }}</td><td>{{ $row->created_at }}</td><td>{{ $row->closed_at ?? '—' }}</td><td>{{ $row->closed_at ? \App\Support\SessionTime::format(max(0, min($end->timestamp, $row->closed_at->timestamp) - max($start->timestamp, $row->created_at->timestamp))) : '—' }}</td><td>{{ $row->note }}</td></tr>
+            <tr wire:key="report-{{ $row->id }}"><td>{{ \App\Support\ConnectionReportPresentation::operator($row, $devices) }}<br><small class="text-muted">{{ $row->from_peer }}</small></td><td>{{ \App\Support\ConnectionReportPresentation::device($devices->get($row->rustdesk_id), $row->rustdesk_id) }}</td><td>{{ \App\Services\SessionWorkGroups::label($row) }}</td><td class="text-nowrap">{{ \App\Support\ConnectionReportPresentation::dateTime($row->created_at) }}</td><td class="text-nowrap">{{ \App\Support\ConnectionReportPresentation::dateTime($row->closed_at) }}</td><td>{{ $row->closed_at ? \App\Support\SessionTime::format(max(0, min($end->timestamp, $row->closed_at->timestamp) - max($start->timestamp, $row->created_at->timestamp))) : '—' }}</td><td>{{ $row->note }}</td></tr>
         @empty<tr><td colspan="7">{{ __('report.empty') }}</td></tr>@endforelse
     </tbody></table></div>
     <div class="d-md-none">
         @forelse ($rows as $row)
             <div class="rd-mini mb-2" wire:key="report-mobile-{{ $row->id }}">
-                <span class="rd-mini-title">{{ $row->from_peer }} → {{ $row->rustdesk_id }}</span>
-                <span class="rd-mini-sub">{{ $row->from_name }} · {{ $devices->get($row->rustdesk_id)?->alias }}</span>
+                <span class="rd-mini-title">{{ \App\Support\ConnectionReportPresentation::operator($row, $devices) }} → {{ \App\Support\ConnectionReportPresentation::device($devices->get($row->rustdesk_id), $row->rustdesk_id) }}</span>
+                <span class="rd-mini-sub">{{ $row->from_peer }}</span>
                 <span class="rd-mini-sub">{{ \App\Services\SessionWorkGroups::label($row) }}</span>
-                <span class="rd-mini-sub">{{ $row->created_at }} — {{ $row->closed_at ?? '—' }}</span>
+                <span class="rd-mini-sub">{{ \App\Support\ConnectionReportPresentation::dateTime($row->created_at) }} — {{ \App\Support\ConnectionReportPresentation::dateTime($row->closed_at) }}</span>
                 <span class="rd-mini-sub">{{ $row->closed_at ? \App\Support\SessionTime::format(max(0, min($end->timestamp, $row->closed_at->timestamp) - max($start->timestamp, $row->created_at->timestamp))) : '—' }}</span>
                 @if ($row->note)<span class="rd-mini-sub">{{ $row->note }}</span>@endif
             </div>
