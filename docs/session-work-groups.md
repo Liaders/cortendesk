@@ -28,7 +28,7 @@ All new endpoints require the existing client Bearer token. No changes are made 
 
 1. Optionally fetch `GET /api/statusdesk/devices/{rustdesk_id}/work-groups`. The response is `{groups: [{id, name}], selection_required: boolean}`. Only visible, active target devices are exposed. These choices alone are not a session assignment.
 2. Resolve the exact session GUID using the existing `GET /api/audit/conn/active?id=...&session_id=...&conn_type=...`. Keep the random u64 session id as a string. Do not match by target id alone: simultaneous sessions may choose different organizations.
-3. Fetch `GET /api/statusdesk/sessions/{guid}/work-group`. The response contains `status`, the recorded `group` or null, and available `groups` only when status is `required`. `automatic`, `selected` and `ungrouped` need no prompt. A null status identifies a legacy session.
+3. Fetch `GET /api/statusdesk/sessions/{guid}/work-group`. The response contains `status`, the recorded `group` or null, and available `groups` only when status is `required`. `automatic` and `selected` are confirmed. Older clients do not prompt for `ungrouped`; v2 clients may offer first assignment using the capabilities below. A null status identifies a legacy session.
 4. For `required`, select one offered group and send `PUT /api/statusdesk/sessions/{guid}/work-group` with `{group_id: integer}`. A 200 response with `{saved: true}` confirms persistence. Do not display a choice as saved before this response. Validation/stale choices return 422; replacing an existing choice returns 409. Fetch fresh state to resolve a conflict.
 
 Session reads/writes require both visibility of the target and a token whose device id exactly matches the audit's initiating `from_peer`. Tokens without a device id cannot assign sessions. A GUID is not sufficient authorization. Selection remains possible after a quick disconnect so delayed audit delivery does not lose an otherwise valid assignment.
@@ -60,13 +60,197 @@ The client must keep selection state per connection, not globally per target. On
 
 ### Suggesting an organization for a new connection
 
-When opening a connection from a specific organization, capture its numeric id as a **per-connection suggestion**. After successful connection, resolve the exact GUID and read its session work-group state using the existing steps above. Preselect the suggestion in the picker only when its id occurs in the server's current `groups` list. Keep all other allowed organizations available below it. A stale suggestion is discarded; the listing is not authoritative for session assignment.
+When opening a connection from a specific organization, capture its numeric id as a **per-connection suggestion**. New clients show the picker **before connecting**, using the device work-groups endpoint. Preselect the suggestion only when it is currently allowed. After successful connection, resolve the exact GUID, read its session work-group state, and revalidate the choice against that state before submitting it. Keep all other allowed organizations available in the picker. A stale suggestion is discarded; the listing is not authoritative for session assignment. A failed connection creates no session assignment. Older clients may continue showing their picker after connecting.
 
 From other tabs, pass no suggestion: with multiple choices the picker starts without a preselected organization. When only one choice is available it is selected automatically (the normal login audit already records `automatic`; a remaining single choice on a `required` session can be confirmed through the same PUT endpoint).
 
 Choosing **Do not choose** on a required session sends no PUT and leaves it with `status: required`, shown as **Organization not selected**. A suggested or locally highlighted choice is not saved until explicitly confirmed and acknowledged by `{saved: true}`. This action is not a way to clear an already confirmed or automatically recorded assignment. No null group, new skip endpoint, or intra-session group switching is introduced.
 
 The existing session checks remain authoritative: the token's initiating device must match `from_peer`, the target must remain visible, the chosen group must be allowed, and a confirmed assignment is immutable. A repeated confirmation of the same group remains idempotent; a different confirmed choice returns 409. Merely fetching the Organizations list never changes session state.
+
+## Client organization management (API v2)
+
+This is an additive contract, separate from the read-only Organizations tab. It requires the same **client Bearer**, never a Console cookie or an admin-API token. The target must satisfy `Device::visibleTo(actor)`, including active/non-deleted status, on every request. A role does not widen device visibility. New capabilities use the actor's current Console permission matrix; no new role or implicit permission is introduced.
+
+### Search and bindings
+
+`GET /api/statusdesk/devices/{rustdesk_id}/organization-options?q=...&current=1&pageSize=100`
+
+```json
+{
+  "api_version": 2,
+  "device_has_organization": false,
+  "bindings": [],
+  "permissions": {"can_attach": true, "can_create": true},
+  "total": 1,
+  "data": [{"id": 10, "name": "Organization A"}]
+}
+```
+
+- `bindings` is the complete deduplicated current membership list, independent of search and pagination: `[{id: 10, name: "Organization A", kind: "primary"}]`. `kind` is `primary` or `additional`; a redundant binding is reported as primary. These are accounting labels, not a grant to view other devices.
+- `device_has_organization` means any primary/additional binding exists. It does **not** mean the current session has a confirmed organization.
+- `can_attach` requires `device: rw`; `can_create` additionally requires `group: rw`. Both are hints; mutation endpoints recheck authorization.
+- Without `can_attach`, `data` is empty and `total` is zero; use the unchanged device work-groups endpoint for ordinary session choices. Bindings remain available for the visible device.
+- Administrators may attach any organization. Other device managers may attach an organization they can access, one already bound to this device, or one they created through this API. Knowing an arbitrary group ID is insufficient.
+- Search is a literal substring match, Unicode case-insensitive (including Cyrillic), maximum 255 characters. Pagination bounds/defaults/order match the Organizations listing: name then ID; `current` 1..2147483647, `pageSize` 1..500, default 100. Pagination counts organizations, never bindings. No device IDs from other organizations are exposed here.
+
+### Creation form
+
+`GET /api/statusdesk/organization-create-options?device_id={rustdesk_id}`
+
+```json
+{
+  "api_version": 2,
+  "can_create": true,
+  "fields": {
+    "name": {"required": true, "max_length": 255},
+    "note": {"required": false, "max_length": 500}
+  },
+  "user_groups": [{"id": 7, "name": "Support"}],
+  "default_user_group_ids": [7]
+}
+```
+
+These are the existing device-group form fields. `user_groups` is the set this actor may grant access to **on the new, empty organization**: all groups for a super-admin; only the actor's own groups for a delegate. This deliberately does not expose unrelated user groups to delegated client management. If exactly one own group is available, it is the default; multiple own groups require a choice. No own groups means no default. If creation is not allowed, return `can_create: false`, empty groups and defaults. Clients translate their own explanatory label: members of the selected user groups get access to this organization's primary devices. Extra accounting bindings never confer that access.
+
+`POST /api/statusdesk/organizations`
+
+```json
+{
+  "request_id": "d7599187-df38-45aa-86ca-aa070bf9b244",
+  "device_id": "000123",
+  "name": "Organization A",
+  "note": null,
+  "user_group_ids": [7]
+}
+```
+
+200 response:
+
+```json
+{"organization": {"id": 10, "name": "Organization A"}, "user_group_ids": [7]}
+```
+
+- `request_id` is a required UUID. `device_id` is a required string (max 255); peer IDs must never be converted to numbers. `name` is required, maximum 255; `note` is optional/nullable, maximum 500. `user_group_ids` is a required array, may be empty, and must contain distinct positive integer IDs from the currently permitted list. Every grant is checked; a forbidden/nonexistent user-group grant returns 403 rather than silently dropping it.
+- Creation requires both management permissions and a visible device. It creates an empty organization and its confirmed access grants, **not** a device binding or a session assignment. The client selects the returned ID, then submits the applicable attachment/session operation. If that operation fails, retry it with this ID instead of creating another organization.
+- The creator can subsequently attach the new organization even when no user group was selected; this special eligibility comes from the creation receipt and does not reveal any other devices.
+- Mutation and durable receipt commit together. `request_id` is scoped to actor + operation (`create` or `attach`), survives token replacement for the same actor, and has no automatic expiration. Repeat identical validated data to recover a lost response. Group ID order is canonicalized; missing/null note are equivalent. Reuse with different data, including a different target device, returns 409. A deleted result returns 409; it is never recreated by replay. Authorization and target visibility are rechecked on retries. Organization names need not be unique; different request IDs are separate operations.
+
+### Device attachment
+
+`POST /api/statusdesk/devices/{rustdesk_id}/work-groups`
+
+```json
+{"group_id": 10, "request_id": "36e9cd4b-f1b2-4efe-85f2-b9d53387382d"}
+```
+
+200 response:
+
+```json
+{
+  "organization": {"id": 10, "name": "Organization A"},
+  "bindings": [{"id": 10, "name": "Organization A", "kind": "primary"}]
+}
+```
+
+The server decides binding kind. If **no organization at all** is bound, the first binding becomes primary and uses the existing primary-group access/strategy behavior. Otherwise a new binding is additional and accounting-only, even if the device has additional bindings but no primary. Existing bindings are a no-op. This endpoint never changes an audit's organization. It requires device management plus attachment eligibility as described above. A forbidden organization returns 422. Idempotency uses the same durable mechanism as creation. The returned `bindings` are current, not the cached list from the original attempt; replay does not restore a binding removed later.
+
+### Atomic first assignment
+
+Session GET responses add these fields without changing the old fields:
+
+```json
+{
+  "api_version": 2,
+  "device_has_organization": false,
+  "bindings": [],
+  "permissions": {
+    "can_attach": true,
+    "can_create": true,
+    "can_assign": true,
+    "can_attach_and_assign": true
+  },
+  "status": "ungrouped",
+  "group": null,
+  "groups": []
+}
+```
+
+`can_assign` is true for `required`, or for `ungrouped` with device-management permission. `can_attach_and_assign` additionally requires an unconfirmed (`required`/`ungrouped`) state and device management. Both are false for legacy/confirmed rows as appropriate. `groups` remains populated **only** for `required`; v2 organization search provides attachment candidates for `ungrouped`. `bindings` describes the current device, while `group` is the immutable historical session snapshot; their names/memberships may differ.
+
+The existing PUT accepts an optional flag:
+
+```json
+{"group_id": 10, "attach_device_if_needed": true}
+```
+
+- Without the flag (or with false), the original contract is unchanged: only `required` may be selected from current device choices; an `ungrouped` or legacy row returns 409. No extra management permission is imposed on the existing selection path.
+- With true, an unconfirmed `required` or `ungrouped` row may be assigned after the same device-management and organization-eligibility checks used for attachment. The device binding, if needed, and audit assignment commit **atomically**. A later failure rolls back the binding too. Already-bound organizations still require device management on this explicit path.
+- The whole exact session, including time before assignment, is attributed to the saved group ID/name. Closed short sessions remain eligible; no timing heuristics are used. Other sessions on the same device are not modified. Legacy rows are not backfilled.
+- Confirmed `automatic`/`selected` rows cannot change; same-group retries return `{saved: true}` without attaching anything or renaming the historical snapshot. Different groups return 409 without device side effects. First assignment is serialized with attachment/competing assignment; no intervals or switching are introduced.
+- Success remains 200 `{saved: true}`; reread session GET for its confirmed snapshot. A separate `request_id` is unnecessary: the exact GUID plus immutable assignment is the idempotency boundary.
+- A device token must still exactly match `from_peer`, and the target must still be visible. A missing device ID in the token returns 403; an unknown/mismatched GUID or invisible target returns 404.
+
+Before intentional disconnect, a new client may offer the same organization picker/create flow for an unassigned device/session. Save and await success before disconnecting; alternatively allow explicit disconnect without assignment or return to the session. Network/process failure cannot guarantee this prompt or persistence. Both existing report formats and the web report read the same saved snapshot via `SessionWorkGroups::label`; the v2 path introduces no separate report attribution source. Changes to report localization/presentation remain a separate planned increment.
+
+### Errors and rollout
+
+Use `Accept: application/json` and `Content-Type: application/json` for JSON writes. Standard Laravel JSON errors use `message`; validation errors additionally use `errors`. Error prose is diagnostic, not a stable translation key; branch on status and current server state.
+
+- 401: invalid, expired, missing client token, or inactive user (`{"message":"Unauthenticated."}`).
+- 403: insufficient management permission, forbidden user-group grant, or session token without initiating device ID. Never retry through admin credentials.
+- 404: device unavailable/pending/deleted/invisible, or session missing/not owned by the initiating token. Does not disclose which check failed.
+- 409: immutable/conflicting session assignment, incompatible session state, reused request UUID with different data, or deleted creation result.
+- 422: invalid parameters (for example `{"message":"...","errors":{"request_id":["..."]}}`), or an organization not eligible for attachment/selection. Refresh choices; do not substitute another organization silently.
+- 429: organization creation is limited to 30 requests/minute per source IP; attachment to 60/minute per source IP, with separate limiter prefixes. Respect `Retry-After`; reuse the same request UUID. Existing endpoint throttles are unchanged.
+- 5xx/network error: persistence is not confirmed. Repeat the same mutation UUID, or reread/retry the exact session GUID, to recover; never create a new organization just because its response was lost.
+
+Detect v2 using the new options endpoint or additive `api_version` in session GET. Absence of a new route on an older server (404/405/501) must preserve old connection/picker behavior; a single 404 can also mean an invisible device, so do not infer an account-wide capability change from it alone. Do not downgrade after 401/403 to bypass authorization. Preserve successful old read-only listing and device work-groups behavior. Roll out the new migration before enabling new client mutations; production is not changed by preparing this code.
+
+### Starting another session for a different organization
+
+A confirmed current session is never reassigned. If the user explicitly wants to work for another organization, the client may open a **new connection with its own GUID** and pass that organization as a per-connection choice. Do not retain the old GUID or report a locally changed label as a saved switch.
+
+For an organization **not yet bound to the device**, the reliable order is:
+
+1. Check organization options and attachment permission. Create the organization first if needed, retaining its returned ID and mutation UUID on retry.
+2. **Before starting the new connection**, submit the device attachment POST and await success. It changes only device configuration, not the old session's immutable attribution. If attachment fails, do not silently connect for another organization.
+3. Start the new connection. Resolve its exact new GUID; read its authoritative session state.
+4. If `required`, confirm the chosen ID from the allowed list through the normal PUT. If `automatic`/`selected` already confirms that same ID, no assignment change is needed. If a different ID is already confirmed, do not overwrite it; show the conflict. Do not silently charge the unwanted organization as if the requested choice succeeded.
+
+The pre-attachment is necessary in the common case where the device has **one other organization**: without it, login automatically confirms that sole existing organization and even atomic attach+assign must return 409. When the new session is still `required` or `ungrouped` and `can_attach_and_assign` is true, the atomic PUT remains available after connection; it is **not** a way to override `automatic` or `selected`. A pre-attachment that succeeds remains a device binding even if the subsequent connection fails; it does not create or reassign a session. Ordinary pre-connection selection of already bound organizations needs no attachment POST.
+
+## Server device alias from the desktop client
+
+These additive endpoints use the existing client Bearer and the same active/non-deleted `Device::visibleTo(actor)` scope. They edit the global Console device alias, not a private address-book alias or the machine hostname. Existing peer payloads and address-book operations keep their semantics. Probe the alias GET separately: organization API v2 alone does not establish that an older deployment supports alias editing.
+
+`GET /api/statusdesk/devices/{rustdesk_id}/alias`
+
+200 response:
+
+```json
+{
+  "api_version": 2,
+  "device_id": "000123",
+  "alias": "Accounting workstation",
+  "can_set_alias": true,
+  "max_length": 255
+}
+```
+
+`device_id` is always a string; `alias` is always a string, empty when no alias exists. Read access requires existing visibility, not device-management permission. `can_set_alias` reflects the current `device: rw` Console permission; admin passes, delegated roles use their matrix, and users without roles retain the existing legacy device-management baseline. Roles and additional accounting bindings never grant device visibility.
+
+`PUT /api/statusdesk/devices/{rustdesk_id}/alias`
+
+```json
+{"alias": "Accounting workstation"}
+```
+
+200 returns the same state fields plus `saved: true`. The `alias` key is required; its value is a string up to 255 Unicode characters or null. Null/empty string clears it; normal request trimming applies. Numeric `0` is invalid, while string `"0"` is a valid alias. Unrelated input fields are ignored, never mass-assigned. The server only updates `devices.alias`; `devices.hostname`, `/api/peers`'s `info.device_name`, ownership, organizations and address-book entries are unchanged. The ordinary `/api/peers` top-level `alias` then reflects the saved value.
+
+Writes recheck visibility and device management, serialize on the device row, and log a changed alias through Console audit. Repeating the same value succeeds without another change/audit event; no request UUID or migration is needed. Concurrent different edits use last committed write semantics, not a 409 revision protocol. After an uncertain response, reread this GET before deciding whether to retry, so a newer edit is not needlessly overwritten. Do not display an alias as saved before acknowledgement; on failure retain the confirmed server value.
+
+Errors: 401 for missing/invalid/expired client token or inactive account; 403 for a visible device without write permission; 404 for an unavailable/invisible/pending/deleted device (even for admin); 422 for missing/invalid/overlong alias; 429 for rate limits; 5xx/network error means unconfirmed success. Standard JSON `message`/validation `errors` apply as above. GET is limited to 120 requests/minute per source IP, PUT to 60/minute per source IP, with separate limiter prefixes; respect `Retry-After`. Old-server 404/405/501 must leave the original toolbar usable and disable unsupported alias editing, not trigger a web/admin fallback. No Console cookie or admin token is accepted as a substitute for the client Bearer.
 
 ## Report and exports
 
@@ -77,3 +261,5 @@ The existing target group filter continues to describe the physical device's cur
 This increment adds `device_work_groups` and three nullable attribution columns to `audit_connections`. It does not change existing group memberships or historical audit values. Rehearse migration on a database copy and take a fresh backup before deployment. Earlier application images ignore the additional table/columns; retaining them preserves new accounting data when rolling back an image. Do not run a down migration as part of an image rollback. Existing schema-equality rollback scripts require review before deploying this increment.
 
 Regression surface: the shared device editor and its create/reset path, the successful-login audit writer, and the connection report/export paths. New device-group relations are never used by access-control or strategy-resolution queries. No client source, connection protocol, production data or production container is modified in this increment.
+
+The v2 management increment additionally creates `client_organization_requests`, an additive receipt table for idempotent creation/attachment. Existing device/audit records are not rewritten by the migration. Keep this table when rolling back an image; do not run its down migration in production, because deleting receipts loses retry guarantees. Retain backups and review schema-equality deployment helpers before any later deployment. New first primary bindings intentionally use existing primary-group strategy/access resolution; additional bindings remain excluded from it.

@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\AddressBookController;
 use App\Http\Controllers\Api\AuditController;
 use App\Http\Controllers\Api\ClientAuthController;
 use App\Http\Controllers\Api\ClientOidcController;
+use App\Http\Controllers\Api\ClientOrganizationsController;
+use App\Http\Controllers\Api\DeviceAliasController;
 use App\Http\Controllers\Api\GroupTabController;
 use App\Http\Controllers\Api\OrganizationsController;
 use App\Http\Controllers\Api\ServerLinkController;
@@ -70,7 +72,13 @@ Route::middleware('auth:client')->group(function () {
     Route::put('/audit', [AuditController::class, 'note']);
     Route::get('/audit/conn/active', [AuditController::class, 'activeConnection']);
     Route::get('/statusdesk/devices/{id}/work-groups', [SessionWorkGroupController::class, 'choices']);
+    Route::get('/statusdesk/devices/{id}/alias', [DeviceAliasController::class, 'show'])->middleware('throttle:120,1,statusdesk-alias-read');
+    Route::put('/statusdesk/devices/{id}/alias', [DeviceAliasController::class, 'update'])->middleware('throttle:60,1,statusdesk-alias-write');
     Route::get('/statusdesk/organizations', [OrganizationsController::class, 'index']);
+    Route::get('/statusdesk/devices/{id}/organization-options', [ClientOrganizationsController::class, 'options']);
+    Route::get('/statusdesk/organization-create-options', [ClientOrganizationsController::class, 'createOptions']);
+    Route::post('/statusdesk/organizations', [ClientOrganizationsController::class, 'create'])->middleware('throttle:30,1,statusdesk-org-create');
+    Route::post('/statusdesk/devices/{id}/work-groups', [ClientOrganizationsController::class, 'attach'])->middleware('throttle:60,1,statusdesk-org-attach');
     Route::put('/statusdesk/sessions/{guid}/work-group', [SessionWorkGroupController::class, 'select']);
     Route::get('/statusdesk/sessions/{guid}/work-group', [SessionWorkGroupController::class, 'show']);
 

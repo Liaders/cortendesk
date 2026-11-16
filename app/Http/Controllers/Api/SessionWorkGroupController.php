@@ -6,17 +6,29 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditConnection;
 use App\Models\ClientToken;
 use App\Models\Device;
+use App\Services\ClientOrganizations;
 use App\Services\SessionWorkGroups;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SessionWorkGroupController extends Controller
 {
     public function show(Request $request, string $guid): JsonResponse
     {
         [$row, $device] = $this->session($request, $guid);
+        $bindings = ClientOrganizations::bindings($device);
+        $permissions = ClientOrganizations::permissions($request->user());
+        $unconfirmed = in_array($row->work_group_status, ['required', 'ungrouped'], true);
 
         return response()->json([
+            'api_version' => 2,
+            'device_has_organization' => $bindings !== [],
+            'bindings' => $bindings,
+            'permissions' => $permissions + [
+                'can_assign' => $row->work_group_status === 'required' || ($unconfirmed && $permissions['can_attach']),
+                'can_attach_and_assign' => $unconfirmed && $permissions['can_attach'],
+            ],
             'status' => $row->work_group_status,
             'group' => $row->work_group_id ? ['id' => $row->work_group_id, 'name' => $row->work_group_name] : null,
             'groups' => $row->work_group_status === 'required'
@@ -38,29 +50,39 @@ class SessionWorkGroupController extends Controller
 
     public function select(Request $request, string $guid): JsonResponse
     {
-        $data = $request->validate(['group_id' => 'required|integer|min:1']);
-        [$row, $device] = $this->session($request, $guid);
+        $data = $request->validate([
+            'group_id' => 'required|integer|min:1',
+            'attach_device_if_needed' => 'sometimes|boolean',
+        ]);
 
-        // A retry stays idempotent even after the configuration or name changes.
-        if (in_array($row->work_group_status, ['selected', 'automatic'], true)) {
-            abort_unless((int) $row->work_group_id === (int) $data['group_id'], 409);
+        return DB::transaction(function () use ($request, $guid, $data) {
+            [$row, $device] = $this->session($request, $guid);
+            // Serialize with device attachment as well as competing session choices.
+            $device = ClientOrganizations::device($request->user(), $device->rustdesk_id, true);
+            $row = AuditConnection::whereKey($row->id)->lockForUpdate()->firstOrFail();
+            // A retry stays idempotent even after the configuration or name changes.
+            if (in_array($row->work_group_status, ['selected', 'automatic'], true)) {
+                abort_unless((int) $row->work_group_id === (int) $data['group_id'], 409);
+
+                return response()->json(['saved' => true]);
+            }
+            $attach = (bool) ($data['attach_device_if_needed'] ?? false);
+            abort_unless($row->work_group_status === 'required' || ($attach && $row->work_group_status === 'ungrouped'), 409);
+            if ($attach) {
+                $group = ClientOrganizations::attach($request->user(), $device, (int) $data['group_id']);
+            } else {
+                $group = SessionWorkGroups::choices($device)->firstWhere('id', (int) $data['group_id']);
+                abort_if($group === null, 422);
+            }
+            $updated = AuditConnection::whereKey($row->id)->where('work_group_status', $row->work_group_status)->update([
+                'work_group_id' => $group->id,
+                'work_group_name' => $group->name,
+                'work_group_status' => 'selected',
+            ]);
+            abort_unless($updated === 1, 409);
 
             return response()->json(['saved' => true]);
-        }
-        abort_unless($row->work_group_status === 'required', 409);
-        $group = SessionWorkGroups::choices($device)->firstWhere('id', (int) $data['group_id']);
-        abort_if($group === null, 422);
-        $updated = AuditConnection::whereKey($row->id)->where('work_group_status', 'required')->update([
-            'work_group_id' => $group->id,
-            'work_group_name' => $group->name,
-            'work_group_status' => 'selected',
-        ]);
-        if (! $updated) {
-            $row->refresh();
-            abort_unless($row->work_group_status === 'selected' && (int) $row->work_group_id === $group->id, 409);
-        }
-
-        return response()->json(['saved' => true]);
+        }, 5);
     }
 
     private function session(Request $request, string $guid): array
