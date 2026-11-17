@@ -7,10 +7,12 @@ use App\Models\Device;
 use App\Models\DeviceGroup;
 use App\Models\Strategy;
 use App\Models\User;
+use App\Support\OrganizationSearch;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Renderless;
 
 /**
  * The Add / Edit device modal, shared by the device list and the device
@@ -35,6 +37,9 @@ trait EditsDevices
     /** Groups created by this editor, without changing visibility grants. */
     #[Locked]
     public array $createdEditorGroupIds = [];
+
+    #[Locked]
+    public array $editorGroupLabels = [];
 
     public function selectEditorGroup(int $id): void
     {
@@ -236,13 +241,33 @@ trait EditsDevices
     }
 
     /** Device groups this actor may see and therefore may choose. */
-    private function accessibleDeviceGroups()
+    private function accessibleDeviceGroupQuery()
     {
         $user = auth()->user();
 
         return DeviceGroup::orderBy('name')
             ->when(! $user->seesAllDevices(), fn ($q) => $q->whereIn('id', array_merge($user->accessibleDeviceGroupIds(), $this->createdEditorGroupIds) ?: [0]))
-            ->get();
+            ->orderBy('id');
+    }
+
+    private function accessibleDeviceGroups()
+    {
+        return $this->accessibleDeviceGroupQuery()->get();
+    }
+
+    #[Renderless]
+    public function searchEditorGroups(string $search = '', int $page = 1): array
+    {
+        $this->authorizeConsole('device', 'rw');
+        abort_if($this->editingId === null, 403);
+        if ($this->editingId) {
+            $this->scopedDevice($this->editingId);
+        }
+        $page = max(1, min($page, 2147483647));
+        $query = OrganizationSearch::apply($this->accessibleDeviceGroupQuery(), $search);
+        $rows = $query->forPage($page, 50)->limit(51)->get(['id', 'name', 'inn']);
+
+        return ['data' => $rows->take(50)->values()->all(), 'has_more' => $rows->count() > 50];
     }
 
     /**
@@ -255,11 +280,16 @@ trait EditsDevices
     {
         $open = $this->editingId !== null;
         $editorDevice = $open && $this->editingId ? $this->scopedDevice($this->editingId)->load(['group', 'workGroups']) : null;
-        $groups = $open ? $this->accessibleDeviceGroups()->concat($editorDevice?->group ? [$editorDevice->group] : [])->unique('id')->sortBy('name') : collect();
+        $selected = array_merge([(int) $this->formGroupId], array_map('intval', $this->formWorkGroupIds));
+        $groups = $open ? $this->accessibleDeviceGroupQuery()->limit(50)->get(['id', 'name', 'inn'])
+            ->concat($this->accessibleDeviceGroupQuery()->whereIn('id', $selected)->get(['id', 'name', 'inn']))
+            ->concat($editorDevice?->group ? [$editorDevice->group] : [])->unique('id')->sortBy('name') : collect();
+        $workGroups = $groups->concat($editorDevice?->workGroups ?? [])->unique('id')->sortBy('name');
+        $this->editorGroupLabels = $workGroups->whereIn('id', $selected)->mapWithKeys(fn ($group) => [$group->id => ['id' => $group->id, 'name' => $group->name, 'inn' => $group->inn]])->all();
 
         return [
             'editorGroups' => $groups,
-            'editorWorkGroups' => $groups->concat($editorDevice?->workGroups ?? [])->unique('id')->sortBy('name'),
+            'editorWorkGroups' => $workGroups,
             'editorUsers' => $open ? User::orderBy('username')->get(['id', 'username']) : collect(),
             'strategies' => $this->editorStrategies(),
             'strategyExplain' => $this->editorStrategyExplain(),

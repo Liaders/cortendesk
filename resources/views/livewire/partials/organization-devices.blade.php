@@ -8,6 +8,7 @@
             <button type="button" class="btn-close" x-ref="organizationClose" wire:click="closeOrganizationDevices" aria-label="{{ __('common.close') }}"></button>
         </div>
         <div class="modal-body">
+        <p class="text-muted">{{ __('organization_import.inn') }}: {{ $viewedOrganization->inn ?: '—' }}</p>
         <p class="text-muted small">{{ __('organizations.accounting_help') }}</p>
         <div class="row g-3">
             @foreach (['primary' => $primaryDevices, 'additional' => $additionalDevices] as $kind => $members)

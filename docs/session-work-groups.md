@@ -83,7 +83,7 @@ This is an additive contract, separate from the read-only Organizations tab. It 
   "bindings": [],
   "permissions": {"can_attach": true, "can_create": true},
   "total": 1,
-  "data": [{"id": 10, "name": "Organization A"}]
+  "data": [{"id": 10, "name": "Organization A", "inn": "7707083893"}]
 }
 ```
 
@@ -92,7 +92,7 @@ This is an additive contract, separate from the read-only Organizations tab. It 
 - `can_attach` requires `device: rw`; `can_create` additionally requires `group: rw`. Both are hints; mutation endpoints recheck authorization.
 - Without `can_attach`, `data` is empty and `total` is zero; use the unchanged device work-groups endpoint for ordinary session choices. Bindings remain available for the visible device.
 - Administrators may attach any organization. Other device managers may attach an organization they can access, one already bound to this device, or one they created through this API. Knowing an arbitrary group ID is insufficient.
-- Search is a literal substring match, Unicode case-insensitive (including Cyrillic), maximum 255 characters. Pagination bounds/defaults/order match the Organizations listing: name then ID; `current` 1..2147483647, `pageSize` 1..500, default 100. Pagination counts organizations, never bindings. No device IDs from other organizations are exposed here.
+- Search is a literal substring match of organization name or INN, Unicode case-insensitive (including Cyrillic), maximum 255 characters. `data` includes additive nullable `inn`; older clients may ignore it. Pagination bounds/defaults/order match the Organizations listing: name then ID; `current` 1..2147483647, `pageSize` 1..500, default 100. Pagination counts organizations, never bindings. No device IDs from other organizations are exposed here.
 
 ### Creation form
 
@@ -104,6 +104,7 @@ This is an additive contract, separate from the read-only Organizations tab. It 
   "can_create": true,
   "fields": {
     "name": {"required": true, "max_length": 255},
+    "inn": {"required": false, "max_length": 12},
     "note": {"required": false, "max_length": 500}
   },
   "user_groups": [{"id": 7, "name": "Support"}],
@@ -133,6 +134,7 @@ These are the existing device-group form fields. `user_groups` is the set this a
 
 - `request_id` is a required UUID. `device_id` is a required string (max 255); peer IDs must never be converted to numbers. `name` is required, maximum 255; `note` is optional/nullable, maximum 500. `user_group_ids` is a required array, may be empty, and must contain distinct positive integer IDs from the currently permitted list. Every grant is checked; a forbidden/nonexistent user-group grant returns 403 rather than silently dropping it.
 - Creation requires both management permissions and a visible device. It creates an empty organization and its confirmed access grants, **not** a device binding or a session assignment. The client selects the returned ID, then submits the applicable attachment/session operation. If that operation fails, retry it with this ID instead of creating another organization.
+- Optional `inn` is a nullable string: empty becomes null; nonempty values must have 10 or 12 ASCII digits, a valid checksum, and be unique. Preserve leading zeros. Invalid/duplicate values return 422. Omission remains compatible with existing client request receipts; omitted INN is not added to the old payload hash. When supplied, INN participates in the request hash and must be repeated on retry. The creation response remains unchanged. Console TXT import is a separate administrator workflow described in [organization import](organization-import.md).
 - The creator can subsequently attach the new organization even when no user group was selected; this special eligibility comes from the creation receipt and does not reveal any other devices.
 - Mutation and durable receipt commit together. `request_id` is scoped to actor + operation (`create` or `attach`), survives token replacement for the same actor, and has no automatic expiration. Repeat identical validated data to recover a lost response. Group ID order is canonicalized; missing/null note are equivalent. Reuse with different data, including a different target device, returns 409. A deleted result returns 409; it is never recreated by replay. Authorization and target visibility are rechecked on retries. Organization names need not be unique; different request IDs are separate operations.
 

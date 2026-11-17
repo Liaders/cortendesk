@@ -3,19 +3,47 @@
 namespace App\Livewire;
 
 use App\Livewire\Concerns\AuthorizesConsole;
+use App\Livewire\Concerns\ImportsOrganizations;
 use App\Models\ConsoleAudit;
 use App\Models\Device;
 use App\Models\DeviceGroup;
 use App\Models\GroupAccess;
 use App\Models\UserGroup;
+use App\Rules\OrganizationInn;
+use App\Support\OrganizationIdentity;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class GroupList extends Component
 {
-    use AuthorizesConsole;
+    use AuthorizesConsole, ImportsOrganizations, WithFileUploads, WithPagination;
+
+    protected string $paginationTheme = 'bootstrap';
+
+    #[Url(except: '')]
+    public string $search = '';
+
+    #[Url(except: 50)]
+    public int $perPage = 50;
+
+    public string $grantSearch = '';
+
+    public string $inn = '';
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage('organizationsPage');
+        $this->resetPage('usersPage');
+    }
+
+    public function updatedPerPage(): void
+    {
+        $this->updatedSearch();
+    }
 
     #[Locked]
     public bool $deviceEditor = false;
@@ -81,6 +109,8 @@ class GroupList extends Component
     {
         if (in_array($tab, ['devices', 'users'], true)) {
             $this->tab = $tab;
+            $this->search = '';
+            $this->updatedSearch();
         }
     }
 
@@ -104,6 +134,7 @@ class GroupList extends Component
         $this->editing = $group->id;
         $this->name = $group->name;
         $this->note = $group->note ?? '';
+        $this->inn = $group instanceof DeviceGroup ? (string) $group->inn : '';
         if ($group instanceof UserGroup) {
             $this->device_group_ids = $group->deviceGroups()->pluck('device_groups.id')->all();
         }
@@ -122,6 +153,7 @@ class GroupList extends Component
             $this->editing = null;
         }
 
+        $this->inn = trim($this->inn);
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'note' => ['nullable', 'string', 'max:500'],
@@ -129,11 +161,17 @@ class GroupList extends Component
             'device_group_ids.*' => [Rule::exists('device_groups', 'id')],
             'accessor_group_ids' => ['array'],
             'accessor_group_ids.*' => [Rule::exists('user_groups', 'id')],
+            'inn' => $this->modalType === 'devices' ? ['nullable', 'string', new OrganizationInn, Rule::unique('device_groups', 'inn')->ignore($this->editing)] : ['nullable'],
         ]);
 
         $deviceGroupIds = array_map('intval', $validated['device_group_ids'] ?? []);
         $accessorGroupIds = array_map('intval', $validated['accessor_group_ids'] ?? []);
         unset($validated['device_group_ids'], $validated['accessor_group_ids']);
+        if ($this->modalType === 'users') {
+            unset($validated['inn']);
+        } else {
+            $validated['inn'] = $validated['inn'] ?: null;
+        }
 
         $validated['note'] = ($validated['note'] ?? '') !== '' ? $validated['note'] : null;
 
@@ -237,7 +275,7 @@ class GroupList extends Component
 
     private function resetForm(): void
     {
-        $this->reset('editing', 'name', 'note', 'device_group_ids', 'accessor_group_ids');
+        $this->reset('editing', 'name', 'note', 'inn', 'grantSearch', 'device_group_ids', 'accessor_group_ids');
         $this->resetValidation();
     }
 
@@ -254,6 +292,7 @@ class GroupList extends Component
 
     public function render()
     {
+        $this->authorizeConsole('group', 'r');
         if ($this->viewingOrganizationId !== null) {
             $this->authorizeConsole('group', 'r');
             $this->authorizeConsole('device', 'r');
@@ -263,19 +302,36 @@ class GroupList extends Component
         $additional = fn ($q) => $q->whereIn('devices.id', clone $visibleIds)
             ->where(fn ($q) => $q->whereNull('devices.device_group_id')->orWhereColumn('devices.device_group_id', '!=', 'device_work_groups.device_group_id'));
 
+        $size = in_array($this->perPage, [25, 50, 100], true) ? $this->perPage : 50;
+        $needle = OrganizationIdentity::nameKey(mb_substr($this->search, 0, 255));
+        $pattern = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $needle).'%';
+        $organizations = DeviceGroup::query()->when($needle !== '', fn ($q) => $q->where(fn ($q) => $q->whereRaw("name_key LIKE ? ESCAPE '!'", [$pattern])->orWhereRaw("inn LIKE ? ESCAPE '!'", [$pattern])));
+        $grantNeedle = OrganizationIdentity::nameKey(mb_substr($this->grantSearch, 0, 255));
+        $grantPattern = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $grantNeedle).'%';
+        $grantOptions = $this->showModal && $this->modalType === 'users'
+            ? DeviceGroup::query()->when(! auth()->user()->is_admin, fn ($q) => $q->whereIn('id', auth()->user()->accessibleDeviceGroupIds()))
+                ->when($grantNeedle !== '', fn ($q) => $q->where(fn ($q) => $q->whereRaw("name_key LIKE ? ESCAPE '!'", [$grantPattern])->orWhereRaw("inn LIKE ? ESCAPE '!'", [$grantPattern])))
+                ->orderBy('name')->orderBy('id')->limit(50)->get(['id', 'name', 'inn']) : collect();
+
         return view($this->deviceEditor ? 'livewire.device-editor-group' : 'livewire.group-list', [
-            'deviceGroups' => DeviceGroup::withCount([
+            'deviceGroups' => ($this->tab !== 'devices' || $this->deviceEditor ? DeviceGroup::whereRaw('1=0') : $organizations)->withCount([
                 'devices' => fn ($q) => $q->whereIn('devices.id', clone $visibleIds),
                 'workDevices' => $additional,
-            ])->orderBy('name')->get(),
+            ])->orderBy('name')->orderBy('id')->paginate($size, ['*'], 'organizationsPage'),
+            'organizationsTotal' => DeviceGroup::count(),
+            'userGroupsTotal' => UserGroup::count(),
             'viewedOrganization' => $organization,
             'primaryDevices' => $organization ? $organization->devices()->whereIn('devices.id', clone $visibleIds)->orderBy('rustdesk_id')->get() : collect(),
             'additionalDevices' => $organization ? $additional($organization->workDevices())->orderBy('rustdesk_id')->get() : collect(),
-            'userGroups' => UserGroup::withCount('users')->with('deviceGroups')->orderBy('name')->get(),
+            'userGroups' => UserGroup::withCount('users')->with('deviceGroups')
+                ->when($this->tab !== 'users' || $this->deviceEditor, fn ($q) => $q->whereRaw('1=0'))
+                ->when($needle !== '', fn ($q) => $q->where('name', 'like', '%'.mb_substr($this->search, 0, 255).'%'))
+                ->orderBy('name')->orderBy('id')->paginate($size, ['*'], 'usersPage'),
+            'accessorUserGroups' => $this->showModal ? UserGroup::orderBy('name')->get(['id', 'name']) : collect(),
             // The folder picker inside the editor offers only what save() would
             // accept from this actor; the lists above are the screen itself and
             // stay whole.
-            'grantableDeviceGroups' => $this->grantableDeviceGroups(),
-        ]);
+            'grantableDeviceGroups' => $grantOptions,
+        ] + ($this->deviceEditor ? [] : $this->importViewData()));
     }
 }

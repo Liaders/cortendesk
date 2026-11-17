@@ -6,6 +6,7 @@ The maintained branch is `codex/statusdesk-main`. `main` remains an unmodified u
 
 ## Included additions
 
+- Optional organization INNs in the list and editor, reviewed TXT import that preserves existing bindings and grants, and server-side organization search/pagination for large catalogs. See [organization import](docs/organization-import.md).
 - Connection time reports with dependent source/target device filters, saved work-organization attribution, interval clipping, time without overlaps per operator, and localized XLSX export. Only authenticated sessions count; exports stop at 10,000 sessions, with a truncation notice and totals for the exported subset. Reports use GMT+3 date boundaries and readable filter summaries, operator display names and device aliases. Invalid dates show a field error. Reports retain the current-ownership and legacy-attribution limitations explained in the UI. Connection-report CSV export has been removed; other log exports are unchanged.
 - Recently registered devices (24 hours), badges on desktop and phone layouts, and a No group filter.
 - Device-group creation from the shared device editor, reusing the existing dialog and preserving unsaved device fields and permission checks.

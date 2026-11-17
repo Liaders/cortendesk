@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\OrganizationImportBatch;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -7,6 +8,15 @@ use Illuminate\Support\Facades\Schedule;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+Artisan::command('statusdesk:prune-organization-imports', function () {
+    $count = OrganizationImportBatch::where(fn ($q) => $q
+        ->where(fn ($q) => $q->whereNull('applied_at')->where('expires_at', '<', now()))
+        ->orWhere('applied_at', '<', now()->subDays(30)))->delete();
+    $this->info('Pruned organization import drafts/receipts: '.$count);
+})->purpose('Remove expired organization drafts and import receipts older than 30 days');
+
+Schedule::command('statusdesk:prune-organization-imports')->dailyAt('04:30');
 
 // Laravel installs signal handlers to release a task's lock whenever the pcntl
 // extension is loaded, even when pcntl_signal is in disable_functions (a

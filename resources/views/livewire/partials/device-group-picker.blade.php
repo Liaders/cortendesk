@@ -1,4 +1,4 @@
-@php($pickerGroups = $editorGroups->map(fn ($group) => ['id' => $group->id, 'name' => $group->name])->values())
+@php($pickerGroups = $editorGroups->map(fn ($group) => ['id' => $group->id, 'name' => $group->name, 'inn' => $group->inn])->values())
 <div x-data="rdGroupPicker($wire, @js($pickerGroups), @js(__('devices.no_group')), @js(auth()->user()?->consoleAllows('group', 'rw') ? __('devices.create_new_group') : ''), @js((bool) auth()->user()?->consoleAllows('group', 'rw')))"
      x-id="['group-list', 'group-input']"
      @click.outside="close()"
@@ -26,6 +26,9 @@
                         x-text="group.name"></button>
             </template>
         </div>
-        <div x-show="matches.length === 0" class="text-muted small px-3 py-2" role="status">{{ __('devices.no_matching_groups') }}</div>
+        <div x-show="loadingResults" class="text-muted small px-3 py-2" role="status">{{ __('organization_import.loading') }}</div>
+        <div x-show="remoteFailed" class="text-danger small px-3 py-2" role="alert">{{ __('organization_import.search_failed') }}</div>
+        <button type="button" x-show="hasMore && !loadingResults" class="btn btn-link" @click="loadMore()">{{ __('organization_import.more') }}</button>
+        <div x-show="matches.length === 0 && !loadingResults && !remoteFailed" class="text-muted small px-3 py-2" role="status">{{ __('devices.no_matching_groups') }}</div>
     </div>
 </div>

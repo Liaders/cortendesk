@@ -7,14 +7,14 @@
                     <a href="javascript:void(0);" class="nav-link {{ $tab === 'devices' ? 'active' : '' }}"
                        wire:click="setTab('devices')">
                         <i class="ri-computer-line me-1"></i>{{ __('groups.device_groups') }}
-                        <span class="badge bg-secondary-subtle text-secondary ms-1">{{ $deviceGroups->count() }}</span>
+                        <span class="badge bg-secondary-subtle text-secondary ms-1">{{ $organizationsTotal }}</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="javascript:void(0);" class="nav-link {{ $tab === 'users' ? 'active' : '' }}"
                        wire:click="setTab('users')">
                         <i class="ri-group-line me-1"></i>{{ __('groups.user_groups') }}
-                        <span class="badge bg-secondary-subtle text-secondary ms-1">{{ $userGroups->count() }}</span>
+                        <span class="badge bg-secondary-subtle text-secondary ms-1">{{ $userGroupsTotal }}</span>
                     </a>
                 </li>
             </ul>
@@ -38,10 +38,18 @@
                     </p>
                 </div>
                 <div class="rd-toolbar-actions">
+                    @if ($tab === 'devices' && auth()->user()?->consoleAllows('group', 'rw'))
+                        <button type="button" class="btn btn-outline-primary" wire:click="openImport"><i class="ri-upload-line"></i>{{ __('organization_import.import') }}</button>
+                    @endif
                     <button type="button" class="btn btn-primary" wire:click="create('{{ $tab }}')">
                         <i class="ri-add-line"></i>{{ $tab === 'users' ? __('groups.add_group') : __('groups.add_device_group') }}
                     </button>
                 </div>
+            </div>
+
+            <div class="row g-2 px-3 pb-3">
+                <div class="col-md-8"><label class="visually-hidden" for="organization-search">{{ $tab === 'devices' ? __('organization_import.search') : __('organization_import.search_name') }}</label><input id="organization-search" type="search" maxlength="255" class="form-control" placeholder="{{ $tab === 'devices' ? __('organization_import.search') : __('organization_import.search_name') }}" wire:model.live.debounce.350ms="search"></div>
+                <div class="col-md-4"><label class="visually-hidden" for="organization-per-page">{{ __('organization_import.per_page') }}</label><select id="organization-per-page" class="form-select" wire:model.live="perPage">@foreach ([25,50,100] as $size)<option value="{{ $size }}">{{ __('organization_import.page_size', ['count' => $size]) }}</option>@endforeach</select></div>
             </div>
 
             {{-- Desktop table (md and up) --}}
@@ -50,6 +58,7 @@
                     <thead>
                     <tr>
                         <th>{{ __('common.name') }}</th>
+                        @if ($tab === 'devices')<th>{{ __('organization_import.inn') }}</th>@endif
                         <th>{{ __('common.note') }}</th>
                         <th>{{ $countLabel }}</th>
                         @if ($tab === 'users')
@@ -63,6 +72,7 @@
                     @forelse ($current as $group)
                         <tr wire:key="g-{{ $tab }}-{{ $group->id }}">
                             <td class="fw-semibold">@if ($tab === 'users' || ! auth()->user()?->consoleAllows('device', 'r')){{ $group->name }}@else<button type="button" class="btn btn-link p-0 text-start text-decoration-none" wire:click="showOrganizationDevices({{ $group->id }})">{{ $group->name }}</button>@endif</td>
+                            @if ($tab === 'devices')<td class="text-nowrap">{{ $group->inn ?: '—' }}</td>@endif
                             <td>{{ $group->note ?: '—' }}</td>
                             <td>
                                 @if ($tab === 'users')
@@ -93,7 +103,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ $tab === 'users' ? 6 : 5 }}" class="rd-empty-cell">
+                            <td colspan="6" class="rd-empty-cell">
                                 <div class="rd-empty">
                                     <div class="rd-empty-icon"><i class="{{ $tab === 'users' ? 'ri-group-line' : 'ri-folders-line' }}"></i></div>
                                     <p class="rd-empty-title">
@@ -121,6 +131,7 @@
                                 <div class="min-width-0">
                                     <span class="rd-mini-title">@if ($tab === 'users' || ! auth()->user()?->consoleAllows('device', 'r')){{ $group->name }}@else<button type="button" class="btn btn-link p-0 text-start text-decoration-none" wire:click="showOrganizationDevices({{ $group->id }})">{{ $group->name }}</button>@endif</span>
                                     <span class="rd-mini-sub">{{ $group->note ?: __('groups.no_note') }}</span>
+                                    @if ($tab === 'devices')<span class="rd-mini-sub">{{ __('organization_import.inn') }}: {{ $group->inn ?: '—' }}</span>@endif
                                 </div>
                                 @if ($tab === 'users')
                                     <span class="badge bg-secondary-subtle text-secondary">{{ $group->users_count }} {{ strtolower($countLabel) }}</span>
@@ -156,6 +167,7 @@
                     </div>
                 @endforelse
             </div>
+            <div class="p-3">{{ $current->links() }}</div>
     </div>
 
     @if ($tab === 'devices' && $viewedOrganization)
@@ -164,4 +176,5 @@
 
     {{-- Create / Edit modal (plain Bootstrap markup, toggled by Livewire) --}}
     @include('livewire.partials.group-edit-modal')
+    @include('livewire.partials.organization-import')
 </div>

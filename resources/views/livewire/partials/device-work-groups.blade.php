@@ -1,4 +1,4 @@
-@php($workPickerGroups = $editorWorkGroups->map(fn ($group) => ['id' => $group->id, 'name' => $group->name])->values())
+@php($workPickerGroups = $editorWorkGroups->map(fn ($group) => ['id' => $group->id, 'name' => $group->name, 'inn' => $group->inn])->values())
 <div class="mb-3" x-data="rdWorkGroupPicker($wire, @js($workPickerGroups), @js((bool) auth()->user()?->consoleAllows('group', 'rw')), @js(auth()->user()?->consoleAllows('group', 'rw') ? __('organizations.create') : ''))"
      x-id="['work-input', 'work-options', 'work-label']" @click.outside="close()"
      @focusout="if (!$el.contains($event.relatedTarget)) close()">
@@ -33,7 +33,10 @@
                 <span x-show="group.id === -1" aria-hidden="true">＋ </span><span x-text="group.name"></span>
             </button>
         </template>
-        <div x-show="matches.length === 0" class="text-muted small px-3 py-2" role="status">{{ __('devices.no_matching_groups') }}</div>
+        <div x-show="loadingResults" class="text-muted small px-3 py-2" role="status">{{ __('organization_import.loading') }}</div>
+        <div x-show="remoteFailed" class="text-danger small px-3 py-2" role="alert">{{ __('organization_import.search_failed') }}</div>
+        <button type="button" x-show="hasMore && !loadingResults" class="btn btn-link" @click="loadMore()">{{ __('organization_import.more') }}</button>
+        <div x-show="matches.length === 0 && !loadingResults && !remoteFailed" class="text-muted small px-3 py-2" role="status">{{ __('devices.no_matching_groups') }}</div>
     </div>
     <div class="form-text">{{ __('organizations.accounting_help') }}</div>
     @error('formWorkGroupIds') <div class="text-danger">{{ $message }}</div> @enderror

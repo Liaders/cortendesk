@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ConsoleAudit;
 use App\Models\DeviceGroup;
+use App\Rules\OrganizationInn;
 use App\Services\ClientOrganizations;
+use App\Support\OrganizationSearch;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ClientOrganizationsController extends Controller
 {
@@ -19,18 +22,17 @@ class ClientOrganizationsController extends Controller
             'pageSize' => 'sometimes|integer|min:1|max:500',
         ]);
         $device = ClientOrganizations::device($request->user(), $id);
-        // Unicode folding is done in PHP: SQLite LOWER does not fold Cyrillic.
-        $needle = mb_strtolower($data['q'] ?? '', 'UTF-8');
-        $rows = ClientOrganizations::attachable($request->user(), $device)->orderBy('name')->orderBy('id')
-            ->get(['id', 'name'])->filter(fn ($group) => $needle === '' || str_contains(mb_strtolower($group->name, 'UTF-8'), $needle))->values();
+        $query = OrganizationSearch::apply(ClientOrganizations::attachable($request->user(), $device), $data['q'] ?? '');
+        $total = (clone $query)->count();
         $size = (int) ($data['pageSize'] ?? 100);
         $page = (int) ($data['current'] ?? 1);
+        $rows = $query->orderBy('name')->orderBy('id')->forPage($page, $size)->get(['id', 'name', 'inn']);
         $bindings = ClientOrganizations::bindings($device);
 
         return response()->json([
             'api_version' => 2, 'device_has_organization' => $bindings !== [], 'bindings' => $bindings,
-            'permissions' => ClientOrganizations::permissions($request->user()), 'total' => $rows->count(),
-            'data' => $rows->slice(($page - 1) * $size, $size)->values()->all(),
+            'permissions' => ClientOrganizations::permissions($request->user()), 'total' => $total,
+            'data' => $rows->values()->all(),
         ]);
     }
 
@@ -44,7 +46,7 @@ class ClientOrganizationsController extends Controller
 
         return response()->json([
             'api_version' => 2, 'can_create' => $allowed,
-            'fields' => ['name' => ['required' => true, 'max_length' => 255], 'note' => ['required' => false, 'max_length' => 500]],
+            'fields' => ['name' => ['required' => true, 'max_length' => 255], 'note' => ['required' => false, 'max_length' => 500], 'inn' => ['required' => false, 'max_length' => 12]],
             'user_groups' => $groups->values()->all(),
             'default_user_group_ids' => count($own) === 1 ? $own : [],
         ]);
@@ -55,6 +57,7 @@ class ClientOrganizationsController extends Controller
         $data = $request->validate([
             'request_id' => 'required|uuid', 'device_id' => 'required|string|max:255',
             'name' => 'required|string|max:255', 'note' => 'nullable|string|max:500',
+            'inn' => ['sometimes', 'nullable', 'string', new OrganizationInn],
             'user_group_ids' => 'present|array', 'user_group_ids.*' => 'required|integer|min:1|distinct',
         ]);
         ClientOrganizations::device($request->user(), $data['device_id']);
@@ -64,8 +67,13 @@ class ClientOrganizationsController extends Controller
         $allowed = ClientOrganizations::userGroups($request->user())->pluck('id')->all();
         abort_unless(array_diff($ids, $allowed) === [], 403, 'User group grant is not allowed.');
         $payload = ['device_id' => $data['device_id'], 'name' => $data['name'], 'note' => $data['note'] ?? null, 'user_group_ids' => $ids];
+        // Preserve pre-INN receipt hashes for clients that omit the optional field.
+        if (array_key_exists('inn', $data)) {
+            $payload['inn'] = $data['inn'];
+        }
         $result = ClientOrganizations::once($request->user(), 'create', $data['request_id'], $payload, function () use ($payload) {
-            $group = DeviceGroup::create(['name' => $payload['name'], 'note' => $payload['note']]);
+            validator($payload, ['inn' => ['nullable', Rule::unique('device_groups', 'inn')]])->validate();
+            $group = DeviceGroup::create(['name' => $payload['name'], 'note' => $payload['note'], 'inn' => $payload['inn'] ?? null]);
             $group->syncAccessorUserGroups($payload['user_group_ids']);
             ConsoleAudit::record('group.create', 'Created device group '.$group->name, 'group', (string) $group->id);
 

@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Support\OrganizationIdentity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DeviceGroup extends Model
 {
-    protected $fillable = ['name', 'note'];
+    protected $fillable = ['name', 'note', 'inn'];
+
+    protected $hidden = ['name_key'];
 
     /**
      * Deleting a folder drops its strategy assignment (pivot cascade) and, in
@@ -18,6 +21,10 @@ class DeviceGroup extends Model
      */
     protected static function booted(): void
     {
+        static::saving(function (DeviceGroup $group) {
+            $group->name_key = OrganizationIdentity::nameKey($group->name);
+            $group->inn = trim((string) $group->inn) ?: null;
+        });
         static::deleted(fn () => Strategy::recomputeAll());
     }
 

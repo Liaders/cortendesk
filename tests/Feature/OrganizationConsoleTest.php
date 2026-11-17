@@ -53,7 +53,7 @@ it('counts and lists only visible primary and additional devices without double 
     })->call('showOrganizationDevices', $b->id)
         ->assertViewHas('primaryDevices', fn ($rows) => $rows->isEmpty())
         ->assertViewHas('additionalDevices', fn ($rows) => $rows->pluck('rustdesk_id')->all() === ['visible'])
-        ->assertDontSee('hidden')->assertDontSee('pending');
+        ->assertDontSeeText('hidden')->assertDontSeeText('pending');
     $role->update(['permissions' => ['group' => 'r']]);
     $this->actingAs($user->fresh());
     Livewire::test(GroupList::class)->call('showOrganizationDevices', $a->id)->assertForbidden();

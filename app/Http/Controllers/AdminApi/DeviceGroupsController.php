@@ -5,6 +5,7 @@ namespace App\Http\Controllers\AdminApi;
 use App\Models\ConsoleAudit;
 use App\Models\Device;
 use App\Models\DeviceGroup;
+use App\Rules\OrganizationInn;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -34,6 +35,7 @@ class DeviceGroupsController extends AdminApiController
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('device_groups', 'name')],
             'note' => ['nullable', 'string'],
+            'inn' => ['nullable', 'string', new OrganizationInn, Rule::unique('device_groups', 'inn')],
         ]);
 
         $group = DeviceGroup::create($data);
@@ -47,6 +49,7 @@ class DeviceGroupsController extends AdminApiController
     {
         $data = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('device_groups', 'name')->ignore($deviceGroup->id)],
+            'inn' => ['sometimes', 'nullable', 'string', new OrganizationInn, Rule::unique('device_groups', 'inn')->ignore($deviceGroup->id)],
             'note' => ['nullable', 'string'],
         ]);
 
@@ -119,6 +122,7 @@ class DeviceGroupsController extends AdminApiController
         $out = [
             'id' => $group->id,
             'name' => $group->name,
+            'inn' => $group->inn,
             'note' => $group->note,
             'devices_count' => $group->devices_count ?? $group->devices()->count(),
         ];
