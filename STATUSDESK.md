@@ -18,7 +18,7 @@ The temporary report image previously prepared separately is not the same as an 
 
 ## Checks and images
 
-`StatusDesk checks and image` runs Pest on PHP 8.4 and 8.5, validates/audits Composer dependencies, and checks formatting of maintained PHP files. It then builds a Linux amd64 image and starts it with no network and a disposable anonymous data volume. The container check covers startup, readiness, an authenticated report, both export formats, and the embedded ID/relay processes.
+`StatusDesk checks and image` runs Pest on PHP 8.4 and 8.5, validates/audits Composer dependencies, and checks formatting of maintained PHP files. It then builds a Linux amd64 image and starts it with no network and a disposable anonymous data volume. The container check covers startup, readiness, an authenticated report, XLSX export, and the embedded ID/relay processes.
 
 Only a successful push to the maintained branch publishes to `ghcr.io/liaders/statusdesk-console`. Pull requests, upstream review runs and manual test runs never publish. Every published build has a `sha-<commit>` tag and an `edge` convenience tag. Use the **image digest from the run summary** for deployment; `edge` is not a production release channel. There is no automatic production deployment and no production SSH key or database in Actions.
 
