@@ -12,8 +12,8 @@ namespace App\Support;
  * UI *labels* them None / View / Manage; the strings 'view' and 'manage' are
  * never stored.
  *
- * Console roles cover two areas the automation API has no endpoints for
- * (`setting`, `token`), which is why CONSOLE_RESOURCES is a superset of
+ * Console roles also cover settings, token management and the explicit
+ * unassigned-device capability, so CONSOLE_RESOURCES is a superset of
  * ApiToken::RESOURCES rather than the same list. Widening the API matrix would
  * invent permissions no route reads.
  */
@@ -27,7 +27,7 @@ final class Permissions
 
     /** Console areas a role can grant. Superset of ApiToken::RESOURCES. */
     public const CONSOLE_RESOURCES = [
-        'device', 'user', 'group', 'address_book', 'audit', 'strategy', 'setting', 'token',
+        'device', 'device_unassigned', 'user', 'group', 'address_book', 'audit', 'strategy', 'setting', 'token',
     ];
 
     /** @return array<string,string> level => translated label */
@@ -39,13 +39,16 @@ final class Permissions
     /** @return array<string,string> */
     public static function resourceLabels(): array
     {
-        return self::translated('resource', self::RESOURCE_LABELS);
+        return self::translated('resource', self::RESOURCE_LABELS) + ['device_unassigned' => __('unorganized_devices.label')];
     }
 
     /** @return array<string,string> */
     public static function resourceHints(): array
     {
-        return self::translated('resource_hint', self::RESOURCE_HINTS);
+        return array_replace(self::translated('resource_hint', self::RESOURCE_HINTS), [
+            'device' => __('unorganized_devices.device_hint'),
+            'device_unassigned' => __('unorganized_devices.hint'),
+        ]);
     }
 
     /** @param array<string,string> $labels */

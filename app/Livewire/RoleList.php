@@ -34,6 +34,8 @@ class RoleList extends Component
 
     public bool $require_two_factor = false;
 
+    public bool $accessUnorganizedDevices = false;
+
     public function mount(): void
     {
         abort_unless(auth()->user()?->is_admin, 403);
@@ -62,6 +64,7 @@ class RoleList extends Component
         // Normalise on load too, so a role stored before a resource existed
         // shows that row as "None" rather than as a blank radio group.
         $this->permissions = Role::normalizePermissions((array) $role->permissions);
+        $this->accessUnorganizedDevices = $role->allows('device_unassigned');
         $this->showModal = true;
     }
 
@@ -73,6 +76,7 @@ class RoleList extends Component
             'name' => ['required', 'string', 'max:255', Rule::unique('roles', 'name')->ignore($this->editing)],
             'description' => ['nullable', 'string', 'max:255'],
             'require_two_factor' => ['boolean'],
+            'accessUnorganizedDevices' => ['boolean'],
             'permissions' => ['array'],
             'permissions.*' => [Rule::in(Permissions::LEVELS)],
         ]);
@@ -83,6 +87,8 @@ class RoleList extends Component
             'require_two_factor' => (bool) ($validated['require_two_factor'] ?? false),
             'permissions' => Role::normalizePermissions($this->permissions),
         ];
+        // This is a visibility switch; device management remains a separate permission.
+        $attributes['permissions']['device_unassigned'] = $validated['accessUnorganizedDevices'] ? 'r' : 'none';
 
         if ($this->editing) {
             $role = Role::findOrFail($this->editing);
@@ -140,7 +146,7 @@ class RoleList extends Component
 
     private function resetForm(): void
     {
-        $this->reset('editing', 'name', 'description', 'require_two_factor');
+        $this->reset('editing', 'name', 'description', 'require_two_factor', 'accessUnorganizedDevices');
         // A new role starts from the standard-user baseline: the least
         // surprising starting point, and never more than the user already had.
         $this->permissions = Role::normalizePermissions(Permissions::LEGACY_USER);
@@ -151,7 +157,8 @@ class RoleList extends Component
     {
         return view('livewire.role-list', [
             'roles' => Role::withCount('users')->orderBy('name')->get(),
-            'resources' => Permissions::CONSOLE_RESOURCES,
+            'resources' => array_values(array_diff(Permissions::CONSOLE_RESOURCES, ['device_unassigned'])),
+            'allResources' => Permissions::CONSOLE_RESOURCES,
             'resourceLabels' => Permissions::resourceLabels(),
             'resourceHints' => Permissions::resourceHints(),
             'levels' => Permissions::LEVELS,

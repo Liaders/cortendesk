@@ -11,10 +11,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * A delegated admin role (PLAN D4): a named permission matrix over the console
  * areas, assigned to users through `users.role_id`.
  *
- * A role answers "which screens and which verbs", never "which rows". Device
- * and address-book visibility stays with the existing scoping helpers
- * (Device::scopeVisibleTo, User::accessibleDeviceGroupIds, …), so granting
- * `device: rw` to a user with no device-group access still shows them nothing.
+ * Roles gate screens and verbs. The explicit device_unassigned capability
+ * additionally exposes devices with no primary or accounting organization.
+ * Device::scopeVisibleTo still enforces ownership, organization grants and
+ * approval; device: rw by itself never expands row visibility.
  *
  * `is_admin` remains the super-admin flag and always outranks any role; role
  * administration itself is reserved to it.

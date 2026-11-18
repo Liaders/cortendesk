@@ -235,6 +235,11 @@ class Device extends Model
             if ($groupIds !== []) {
                 $q->orWhereIn('device_group_id', $groupIds);
             }
+            if ($user->consoleAllows('device_unassigned')) {
+                // Accounting-only bindings must never grant fleet access.
+                $q->orWhere(fn (Builder $unassigned) => $unassigned
+                    ->whereNull('device_group_id')->whereDoesntHave('workGroups'));
+            }
         });
     }
 

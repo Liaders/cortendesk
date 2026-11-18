@@ -229,9 +229,8 @@ class User extends Authenticatable
     /**
      * Admins see the whole fleet; everyone else is scoped.
      *
-     * PLAN D4 deliberately does NOT consult the delegated role here. Roles gate
-     * console areas and verbs; row visibility stays with the device-group and
-     * ownership grants, so a role can never widen the fleet a user can see.
+     * Delegated roles never grant the whole fleet. The separate unassigned
+     * device permission is applied narrowly by Device::scopeOwnershipVisibleTo.
      */
     public function seesAllDevices(): bool
     {
@@ -252,8 +251,8 @@ class User extends Authenticatable
      * exactly what a non-admin could do before roles existed — that fallback is
      * why an install with no roles behaves identically after this change.
      *
-     * This answers "may you use this screen/verb", never "which rows do you
-     * see" — see seesAllDevices() and Device::scopeVisibleTo for that axis.
+     * Device::scopeVisibleTo handles rows, including its narrow opt-in for
+     * device_unassigned; ordinary device: rw never grants additional rows.
      */
     public function consoleAllows(string $resource, string $level = 'r'): bool
     {

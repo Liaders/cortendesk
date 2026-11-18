@@ -4,7 +4,7 @@
             <div>
                 <h4 class="header-title">{{ __('common.roles') }}</h4>
                 <p class="rd-card-sub mb-0">
-                    {{ __('roles.role_opens_console_sections_for') }}
+                    {{ __('unorganized_devices.scope') }}
                 </p>
             </div>
             <div class="rd-card-actions">
@@ -39,7 +39,7 @@
                                 </div>
                             </td>
                             <td>
-                                @php $granted = collect($resources)->filter(fn ($r) => $role->levelFor($r) !== 'none'); @endphp
+                                @php $granted = collect($allResources)->filter(fn ($r) => $role->levelFor($r) !== 'none'); @endphp
                                 @forelse ($granted as $res)
                                     <span class="badge {{ $role->levelFor($res) === 'rw' ? 'bg-primary-subtle text-primary' : 'bg-secondary-subtle text-secondary' }}">
                                         {{ $resourceLabels[$res] ?? $res }}: {{ $levelLabels[$role->levelFor($res)] }}
@@ -95,7 +95,7 @@
                                 </span>
                             </div>
                             <div class="mt-2">
-                                @php $granted = collect($resources)->filter(fn ($r) => $role->levelFor($r) !== 'none'); @endphp
+                                @php $granted = collect($allResources)->filter(fn ($r) => $role->levelFor($r) !== 'none'); @endphp
                                 @forelse ($granted as $res)
                                     <span class="badge {{ $role->levelFor($res) === 'rw' ? 'bg-primary-subtle text-primary' : 'bg-secondary-subtle text-secondary' }}">
                                         {{ $resourceLabels[$res] ?? $res }}: {{ $levelLabels[$role->levelFor($res)] }}
@@ -198,6 +198,13 @@
                                         <small class="text-muted d-block">{{ $resourceHints[$res] ?? '' }}</small>
                                     </div>
                                 @endforeach
+                            </div>
+
+                            <div class="form-check form-switch mt-3">
+                                <input class="form-check-input" type="checkbox" role="switch" id="rl-unorganized"
+                                       wire:model="accessUnorganizedDevices">
+                                <label class="form-check-label" for="rl-unorganized">{{ __('unorganized_devices.label') }}</label>
+                                <small class="text-muted d-block">{{ __('unorganized_devices.hint') }}</small>
                             </div>
 
                             <div class="form-check form-switch mt-3">
