@@ -61,7 +61,7 @@
             <div class="rd-toolbar-search">
                 <div class="input-group">
                     <span class="input-group-text"><i class="ri-search-line"></i></span>
-                    <input type="search" autocomplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" class="form-control" placeholder="{{ \App\Support\SearchHint::placeholder(__('devices.search_id_alias_hostname_user')) }}"
+                    <input type="search" autocomplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" class="form-control" placeholder="{{ \App\Support\SearchHint::placeholder(__('console_usability.search_devices')) }}"
                            wire:model.live.debounce.300ms="search">
                 </div>
             </div>
@@ -71,13 +71,7 @@
                 <option value="offline">{{ __('devices.offline') }}</option>
                 <option value="duplicates">{{ __('devices.duplicates') }}</option>
             </select>
-            <select class="form-select rd-toolbar-filter" wire:model.live="group">
-                <option value="0">{{ __('devices.all_groups') }}</option>
-                <option value="-1">{{ __('devices.no_group') }}</option>
-                @foreach ($groups as $g)
-                    <option value="{{ $g->id }}">{{ $g->name }}</option>
-                @endforeach
-            </select>
+            @include('livewire.partials.organization-filter')
             @if (auth()->user()?->is_admin)
                 <select class="form-select rd-toolbar-filter" wire:model.live="owner">
                     <option value="0">{{ __('devices.all_owners') }}</option>

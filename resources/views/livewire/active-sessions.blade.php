@@ -62,6 +62,7 @@
                                         <span class="rd-cell-title text-truncate">{{ $targetName }}</span>
                                     @endif
                                     <a href="{{ \App\Support\ClientLink::to($s->rustdesk_id) }}" title="{{ __('common.connect_with_rustdesk') }}" class="fs-13">{{ $s->rustdesk_id }}</a>
+                                    <span class="rd-cell-sub text-wrap" title="{{ __('work_groups.work_group') }}">{{ \App\Services\SessionWorkGroups::label($s, null, false) }}</span>
                                 </td>
                                 <td>
                                     <x-conn-type :type="$s->conn_type"/>
@@ -122,6 +123,7 @@
                                 </div>
                             @endif
                             <div class="rd-mini-foot">
+                                <span class="rd-mini-sub text-wrap w-100" title="{{ __('work_groups.work_group') }}">{{ \App\Services\SessionWorkGroups::label($s, null, false) }}</span>
                                 <a href="{{ \App\Support\ClientLink::to($s->rustdesk_id) }}" title="{{ __('common.connect_with_rustdesk') }}"
                                    class="fs-13 text-truncate">@if ($targetName){{ $targetName }} · @endif{{ $s->rustdesk_id }}</a>
                                 <span class="rd-mini-sub text-nowrap"><i class="rd-dot text-success"></i><span

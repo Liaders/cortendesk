@@ -3,6 +3,7 @@ window.rdWorkGroupPicker = function (wire, groups, canCreate, createLabel) {
     return {
         ...(window.rdOrganizationRemote ? window.rdOrganizationRemote(wire, groups) : {catalog: groups, remote: false, fetchGroups() {}, queueSearch() {}, cancelSearch() {}}),
         open: false, query: '', active: -1, pending: false,
+        pointerWithin: false,
         get primary() { return wire.editorGroupLabels?.[wire.formGroupId] || this.catalog.find(group => group.id === Number(wire.formGroupId)); },
         get selected() {
             const ids = wire.formWorkGroupIds.map(Number);

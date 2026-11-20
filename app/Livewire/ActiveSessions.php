@@ -76,6 +76,7 @@ class ActiveSessions extends Component
             : Device::query()->visibleTo($user)->pluck('rustdesk_id')->all();
 
         $sessions = AuditConnection::query()
+            ->with('workOrganization:id,name')
             ->when($visibleIds !== null, fn ($q) => $q->whereIn('rustdesk_id', $visibleIds))
             ->whereNull('closed_at')
             ->whereNotNull('from_peer')

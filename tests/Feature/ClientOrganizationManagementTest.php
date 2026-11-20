@@ -176,7 +176,7 @@ it('requires explicit opt in to assign ungrouped sessions and keeps the whole cl
     try {
         file_put_contents($path, $bytes);
         expect($zip->open($path))->toBeTrue();
-        expect($zip->getFromName('xl/sharedStrings.xml'))->toContain('Узорметалл');
+        expect($zip->getFromName('xl/sharedStrings.xml'))->toContain('Renamed')->not->toContain('Узорметалл');
     } finally {
         $zip->close();
         unlink($path);

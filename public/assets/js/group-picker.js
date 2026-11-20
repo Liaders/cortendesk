@@ -47,6 +47,7 @@ window.rdGroupPicker = function (wire, groups, noGroup, newGroup, canCreate) {
         query: '',
         active: 0,
         pending: false,
+        pointerWithin: false,
         get label() {
             return wire.editorGroupLabels?.[wire.formGroupId]?.name || this.catalog.find(group => group.id === Number(wire.formGroupId))?.name || noGroup;
         },
@@ -97,4 +98,20 @@ window.rdGroupPicker = function (wire, groups, noGroup, newGroup, canCreate) {
             }
         }
     };
+};
+
+/** The toolbar uses the same searchable control, with All/Unassigned actions. */
+window.rdOrganizationFilter = function (wire, groups, allGroups, noGroup) {
+    const adapter = {
+        get formGroupId() { return wire.group; },
+        get editorGroupLabels() { return wire.filterGroupLabels; },
+        searchEditorGroups(query, page) { return wire.searchFilterGroups(query, page); },
+        selectEditorGroup(id) { return wire.selectGroupFilter(id); }
+    };
+    const picker = window.rdGroupPicker(adapter, groups, allGroups, '', false);
+    Object.defineProperties(picker, {
+        label: {get() { return Number(wire.group) === -1 ? noGroup : adapter.editorGroupLabels?.[wire.group]?.name || this.catalog.find(group => group.id === Number(wire.group))?.name || allGroups; }},
+        choices: {get() { return [{id: 0, name: allGroups}, {id: -1, name: noGroup}, ...this.matches]; }}
+    });
+    return picker;
 };

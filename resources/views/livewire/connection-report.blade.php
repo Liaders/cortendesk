@@ -1,8 +1,8 @@
 <div>
     <div class="card"><div class="card-body">
         <div class="row g-3 mb-3">
-            <div class="col-md-4"><label class="form-label" for="report-from">{{ __('report.date_from') }}</label><input id="report-from" type="text" inputmode="numeric" placeholder="1.11.2026" class="form-control" wire:model.live.debounce.500ms="dateFrom" aria-describedby="report-date-hint">@error('dateFrom')<span class="text-danger">{{ $message }}</span>@enderror</div>
-            <div class="col-md-4"><label class="form-label" for="report-to">{{ __('report.date_to') }}</label><input id="report-to" type="text" inputmode="numeric" placeholder="30.11.2026" class="form-control" wire:model.live.debounce.500ms="dateTo" aria-describedby="report-date-hint">@error('dateTo')<span class="text-danger">{{ $message }}</span>@enderror</div>
+            @include('livewire.partials.report-date', ['field' => 'dateFrom', 'id' => 'report-from', 'caption' => __('report.date_from')])
+            @include('livewire.partials.report-date', ['field' => 'dateTo', 'id' => 'report-to', 'caption' => __('report.date_to')])
             <div class="col-md-4 d-flex align-items-end gap-2"><button class="btn btn-outline-primary" wire:click="period('this')">{{ __('report.this_month') }}</button><button class="btn btn-outline-primary" wire:click="period('last')">{{ __('report.last_month') }}</button></div>
         </div>
         <p class="text-muted fs-13" id="report-date-hint">{{ __('report.date_hint') }} · {{ \App\Livewire\ConnectionReport::TIMEZONE_LABEL }}</p>
@@ -27,9 +27,9 @@
                         @if ($field === 'device_group_id')
                             @foreach ($devices->pluck('group')->filter()->unique('id')->sortBy('name') as $group)<option value="{{ $group->id }}">{{ $group->name }}</option>@endforeach
                         @elseif ($field === 'user_id')
-                            @foreach ($devices->pluck('user')->filter()->unique('id')->sortBy(fn ($user) => trim((string) $user->name) ?: $user->username) as $user)<option value="{{ $user->id }}">{{ trim((string) $user->name) ?: $user->username }}</option>@endforeach
+                            @foreach ($devices->pluck('user')->filter()->concat($webUsers)->unique('id')->sortBy(fn ($user) => trim((string) $user->name) ?: $user->username) as $user)<option value="{{ $user->id }}">{{ trim((string) $user->name) ?: $user->username }}</option>@endforeach
                         @elseif ($field === 'user_group_id')
-                            @foreach ($devices->pluck('user')->filter()->flatMap(fn ($user) => $user->groups)->unique('id')->sortBy('name') as $group)<option value="{{ $group->id }}">{{ $group->name }}</option>@endforeach
+                            @foreach ($devices->pluck('user')->filter()->concat($webUsers)->flatMap(fn ($user) => $user->groups)->unique('id')->sortBy('name') as $group)<option value="{{ $group->id }}">{{ $group->name }}</option>@endforeach
                         @else
                             @foreach ($side === 'source' ? $sourceDevices : $targetDevices as $device)<option value="{{ $device->rustdesk_id }}">{{ \App\Support\ConnectionReportPresentation::device($device) }}</option>@endforeach
                         @endif
@@ -39,7 +39,7 @@
         @endforeach
         </div>
         <details class="text-muted mt-3 mb-3"><summary>{{ __('report.method') }}</summary><p class="mt-2">{{ __('report.help', ['timezone' => \App\Livewire\ConnectionReport::TIMEZONE_LABEL]) }}</p>
-        <p>{{ __('report.attribution') }}</p><p>{{ __('work_groups.report_help') }}</p></details>
+        <p>{{ __('report.attribution') }}</p><p>{{ __('console_usability.report_note') }}</p><p>{{ __('work_groups.report_help') }}</p></details>
         <button class="btn btn-primary" wire:click="exportXlsx" wire:loading.attr="disabled">{{ __('report.export_xlsx') }}</button>
         <p class="text-muted fs-13 mt-2 mb-0">{{ __('report.export_limit') }}</p>
     </div></div>
@@ -83,13 +83,13 @@
     </div></div></div>
     <div class="card"><div class="card-body"><h5>{{ __('report.sheet_sessions') }}</h5><div class="table-responsive d-none d-md-block"><table class="table align-middle"><thead><tr><th>{{ __('report.from') }}</th><th>{{ __('report.to_device') }}</th><th>{{ __('work_groups.work_group') }}</th><th>{{ __('report.start') }}</th><th>{{ __('report.end') }}</th><th>{{ __('report.seconds') }}</th><th>{{ __('report.note') }}</th></tr></thead><tbody>
         @forelse ($rows as $row)
-            <tr wire:key="report-{{ $row->id }}"><td>{{ \App\Support\ConnectionReportPresentation::operator($row, $devices) }}<br><small class="text-muted">{{ $row->from_peer }}</small></td><td>{{ \App\Support\ConnectionReportPresentation::device($devices->get($row->rustdesk_id), $row->rustdesk_id) }}</td><td>{{ \App\Services\SessionWorkGroups::label($row) }}</td><td class="text-nowrap">{{ \App\Support\ConnectionReportPresentation::dateTime($row->created_at) }}</td><td class="text-nowrap">{{ \App\Support\ConnectionReportPresentation::dateTime($row->closed_at) }}</td><td>{{ $row->closed_at ? \App\Support\SessionTime::format(max(0, min($end->timestamp, $row->closed_at->timestamp) - max($start->timestamp, $row->created_at->timestamp))) : '—' }}</td><td>{{ $row->note }}</td></tr>
+            <tr wire:key="report-{{ $row->id }}"><td>{{ \App\Support\ConnectionReportPresentation::operator($row, $devices, $webUsers) }}<br><small class="text-muted">{{ $row->from_peer }}</small></td><td>{{ \App\Support\ConnectionReportPresentation::device($devices->get($row->rustdesk_id), $row->rustdesk_id) }}</td><td>{{ \App\Services\SessionWorkGroups::label($row) }}</td><td class="text-nowrap">{{ \App\Support\ConnectionReportPresentation::dateTime($row->created_at) }}</td><td class="text-nowrap">{{ \App\Support\ConnectionReportPresentation::dateTime($row->closed_at) }}</td><td>{{ $row->closed_at ? \App\Support\SessionTime::format(max(0, min($end->timestamp, $row->closed_at->timestamp) - max($start->timestamp, $row->created_at->timestamp))) : '—' }}</td><td>{{ $row->note }}</td></tr>
         @empty<tr><td colspan="7">{{ __('report.empty') }}</td></tr>@endforelse
     </tbody></table></div>
     <div class="d-md-none">
         @forelse ($rows as $row)
             <div class="rd-mini mb-2" wire:key="report-mobile-{{ $row->id }}">
-                <span class="rd-mini-title">{{ \App\Support\ConnectionReportPresentation::operator($row, $devices) }} → {{ \App\Support\ConnectionReportPresentation::device($devices->get($row->rustdesk_id), $row->rustdesk_id) }}</span>
+                <span class="rd-mini-title">{{ \App\Support\ConnectionReportPresentation::operator($row, $devices, $webUsers) }} → {{ \App\Support\ConnectionReportPresentation::device($devices->get($row->rustdesk_id), $row->rustdesk_id) }}</span>
                 <span class="rd-mini-sub">{{ $row->from_peer }}</span>
                 <span class="rd-mini-sub">{{ \App\Services\SessionWorkGroups::label($row) }}</span>
                 <span class="rd-mini-sub">{{ \App\Support\ConnectionReportPresentation::dateTime($row->created_at) }} — {{ \App\Support\ConnectionReportPresentation::dateTime($row->closed_at) }}</span>

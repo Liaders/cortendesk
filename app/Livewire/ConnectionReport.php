@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Livewire\Concerns\AuthorizesConsole;
 use App\Models\AuditConnection;
 use App\Models\Device;
+use App\Models\User;
 use App\Services\SessionWorkGroups;
 use App\Support\ConnectionReportPresentation;
 use App\Support\ReportWorkbook;
@@ -128,6 +129,16 @@ class ConnectionReport extends Component
         return $q;
     }
 
+    /** Only users whose identity this report viewer may already resolve. */
+    private function operatorUsers()
+    {
+        $viewer = auth()->user();
+
+        return User::query()->when(! $viewer->seesAllDevices(), fn ($q) => $q->where(fn ($q) => $q
+            ->whereIn('id', $viewer->visibleUserIds())
+            ->orWhereIn('id', $this->devices()->whereNotNull('user_id')->select('user_id'))));
+    }
+
     private function deviceOptions(string $side)
     {
         $filters = $this->{$side};
@@ -152,12 +163,19 @@ class ConnectionReport extends Component
     private function query()
     {
         [$start, $end] = $this->bounds();
-        $q = AuditConnection::query()->with('controlledDevice.group')->whereNotNull('from_peer')->where('from_peer', '!=', '')
+        $q = AuditConnection::query()->with(['controlledDevice.group', 'workOrganization'])->whereNotNull('from_peer')->where('from_peer', '!=', '')
             ->whereIn('rustdesk_id', $this->devices($this->target)->select('rustdesk_id'))
             ->where('created_at', '<', $end->setTimezone(config('app.timezone')))
             ->where(fn ($q) => $q->whereNull('closed_at')->orWhere('closed_at', '>', $start->setTimezone(config('app.timezone'))));
         if (array_filter($this->source, fn ($v) => $v !== '' && $v !== null) !== []) {
-            $q->whereIn('from_peer', $this->devices($this->source)->select('rustdesk_id'));
+            $webIds = collect();
+            if (($this->source['device_group_id'] ?? '') === '' && ($this->source['rustdesk_id'] ?? '') === '') {
+                $users = $this->operatorUsers()
+                    ->when(($this->source['user_id'] ?? '') !== '', fn ($q) => $q->whereKey($this->source['user_id']))
+                    ->when(($this->source['user_group_id'] ?? '') !== '', fn ($q) => $q->whereHas('groups', fn ($q) => $q->where('user_groups.id', $this->source['user_group_id'])));
+                $webIds = $users->pluck('id')->map(fn ($id) => 'web-'.$id);
+            }
+            $q->where(fn ($q) => $q->whereIn('from_peer', $this->devices($this->source)->select('rustdesk_id'))->orWhereIn('from_peer', $webIds));
         }
         if ($this->workGroup === 'unassigned') {
             $q->where('work_group_status', 'required');
@@ -180,6 +198,7 @@ class ConnectionReport extends Component
     {
         [$start, $end] = $this->bounds();
         $devices = $this->devices()->with(['user.groups', 'group', 'workGroups'])->get()->keyBy('rustdesk_id');
+        $webUsers = $this->operatorUsers()->with('groups')->get()->keyBy('id');
         $total = $active = $count = 0;
         $intervals = $breakdown = $operators = [];
         foreach ($sessions ?? $this->query()->lazyById(1000) as $row) {
@@ -191,10 +210,9 @@ class ConnectionReport extends Component
             }
             $seconds = $this->seconds($row, $start, $end);
             $total += $seconds;
-            $device = $devices->get($row->from_peer);
-            $operator = $device?->user_id ? 'user:'.$device->user_id : 'device:'.$row->from_peer;
+            $operator = ConnectionReportPresentation::operatorKey($row, $devices, $webUsers);
             $intervals[$operator][] = [max($start->timestamp, $row->created_at->timestamp), min($end->timestamp, $row->closed_at->timestamp)];
-            $operators[$operator] ??= ['name' => ConnectionReportPresentation::operator($row, $devices), 'count' => 0, 'seconds' => 0];
+            $operators[$operator] ??= ['name' => ConnectionReportPresentation::operator($row, $devices, $webUsers), 'count' => 0, 'seconds' => 0];
             $operators[$operator]['count']++;
             $operators[$operator]['seconds'] += $seconds;
             $key = $row->work_group_status === null ? ($devices->get($row->rustdesk_id)?->device_group_id ?? 0) : ($row->work_group_id ?? $row->work_group_status);
@@ -204,7 +222,7 @@ class ConnectionReport extends Component
         }
 
         return [
-            'devices' => $devices, 'total' => $total, 'active' => $active, 'count' => $count,
+            'devices' => $devices, 'webUsers' => $webUsers, 'total' => $total, 'active' => $active, 'count' => $count,
             'unique' => SessionTime::withoutOverlaps($intervals), 'breakdown' => $breakdown,
             'start' => $start, 'end' => $end, 'operators' => $operators,
         ];
@@ -235,7 +253,7 @@ class ConnectionReport extends Component
             [$text(__('report.duration')), $duration($data['total'])],
             [$text(__('report.unique')), $duration($data['unique'])],
             [$text(__('report.method')), $text(__('report.help', ['timezone' => self::TIMEZONE_LABEL]))],
-            [$text(__('report.attribution_title')), $text(__('report.attribution'))],
+            [$text(__('report.attribution_title')), $text(__('report.attribution').' '.__('console_usability.report_note'))],
             [$text(__('work_groups.work_group')), $text(__('work_groups.report_help'))],
         );
         $xlsx = SimpleXLSXGen::fromArray($summary, __('report.sheet_summary'))
@@ -251,7 +269,7 @@ class ConnectionReport extends Component
         $sessions = [$heading([__('report.from_id'), __('report.from'), __('report.to_device'), __('report.start'), __('report.end'), __('report.seconds'), __('report.type'), __('report.note'), __('work_groups.work_group')])];
         foreach ($exportRows as $row) {
             // Raw cells keep IDs as text and prevent formulas, markup or links in client data.
-            $sessions[] = [$text($row->from_peer), $text(ConnectionReportPresentation::operator($row, $data['devices'])), $text(ConnectionReportPresentation::device($data['devices']->get($row->rustdesk_id), $row->rustdesk_id)),
+            $sessions[] = [$text($row->from_peer), $text(ConnectionReportPresentation::operator($row, $data['devices'], $data['webUsers'])), $text(ConnectionReportPresentation::device($data['devices']->get($row->rustdesk_id), $row->rustdesk_id)),
                 ReportWorkbook::date($row->created_at?->copy()->setTimezone(self::TIMEZONE), true), ReportWorkbook::date($row->closed_at?->copy()->setTimezone(self::TIMEZONE), true),
                 $row->closed_at ? $duration($this->seconds($row, $data['start'], $data['end'])) : null,
                 $text(AuditConnection::typeLabel((int) $row->conn_type)), $text($row->note), $text(SessionWorkGroups::label($row))];
@@ -269,8 +287,8 @@ class ConnectionReport extends Component
         $groups = $devices->flatMap(fn ($device) => SessionWorkGroups::choices($device))->map(fn ($group) => ['id' => $group->id, 'name' => $group->name]);
         $latest = AuditConnection::whereIn('rustdesk_id', $devices->keys())->whereNotNull('from_peer')->where('from_peer', '!=', '')
             ->whereNotNull('work_group_id')->groupBy('work_group_id')->selectRaw('MAX(id)');
-        $historical = AuditConnection::whereIn('id', $latest)->get(['work_group_id', 'work_group_name'])
-            ->map(fn ($row) => ['id' => $row->work_group_id, 'name' => $row->work_group_name]);
+        $historical = AuditConnection::whereIn('id', $latest)->with('workOrganization')->get(['work_group_id', 'work_group_name'])
+            ->map(fn ($row) => ['id' => $row->work_group_id, 'name' => $row->workOrganization?->name ?? $row->work_group_name]);
 
         return $groups->concat($historical)->unique('id')->sortBy('name')->values();
     }
@@ -279,7 +297,7 @@ class ConnectionReport extends Component
     {
         $devices = $data['devices'];
         $groups = $devices->pluck('group')->filter()->keyBy('id');
-        $users = $devices->pluck('user')->filter()->keyBy('id');
+        $users = $devices->pluck('user')->filter()->concat($data['webUsers'] ?? [])->keyBy('id');
         $userGroups = $users->flatMap(fn ($user) => $user->groups)->keyBy('id');
         $sourceGroup = $this->source['device_group_id'] ?? '';
         $workGroups = ($data['workGroups'] ?? $this->workGroups($devices))->keyBy('id');
@@ -315,6 +333,7 @@ class ConnectionReport extends Component
             $this->setErrorBag($e->validator->errors());
             $data = [
                 'devices' => $this->devices()->with(['user.groups', 'group', 'workGroups'])->get()->keyBy('rustdesk_id'),
+                'webUsers' => $this->operatorUsers()->with('groups')->get()->keyBy('id'),
                 'total' => 0, 'active' => 0, 'count' => 0, 'unique' => 0,
                 'breakdown' => [], 'operators' => [], 'start' => now(), 'end' => now(),
                 'rows' => new LengthAwarePaginator([], 0, 25),

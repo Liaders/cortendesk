@@ -15,7 +15,11 @@ use App\Services\DeviceAddressBooks;
 use App\Services\DeviceEnrollment;
 use App\Services\DuplicateDevices;
 use App\Support\Csv;
+use App\Support\OrganizationSearch;
+use App\Support\UnicodeSearch;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Locked;
+use Livewire\Attributes\Renderless;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -23,6 +27,27 @@ use Pdo\Sqlite;
 
 class DeviceList extends Component
 {
+    #[Locked]
+    public array $filterGroupLabels = [];
+
+    #[Renderless]
+    public function searchFilterGroups(string $search = '', int $page = 1): array
+    {
+        $this->authorizeConsole('device');
+        $rows = OrganizationSearch::apply($this->accessibleDeviceGroupQuery(), $search)
+            ->forPage(max(1, min($page, 2147483647)), 50)->limit(51)->get(['id', 'name', 'inn']);
+
+        return ['data' => $rows->take(50)->values()->all(), 'has_more' => $rows->count() > 50];
+    }
+
+    public function selectGroupFilter(int $id): void
+    {
+        $this->authorizeConsole('device');
+        abort_unless(in_array($id, [0, -1], true) || $this->accessibleDeviceGroupQuery()->whereKey($id)->exists(), 403);
+        $this->group = $id;
+        $this->updatedGroup();
+    }
+
     use AuthorizesConsole, DeletesDevices, EditsDevices, WithPagination;
 
     protected string $paginationTheme = 'bootstrap';
@@ -686,7 +711,10 @@ class DeviceList extends Component
                 && (! in_array($key, self::ADMIN_COLUMNS, true) || $user->is_admin);
         }
 
-        $groups = $this->accessibleDeviceGroups();
+        $groups = $this->groupPickerOpen ? $this->accessibleDeviceGroups() : collect();
+        $filterGroups = $this->accessibleDeviceGroupQuery()->limit(50)->get(['id', 'name', 'inn'])
+            ->concat($this->group > 0 ? $this->accessibleDeviceGroupQuery()->whereKey($this->group)->get(['id', 'name', 'inn']) : [])->unique('id');
+        $this->filterGroupLabels = $filterGroups->where('id', $this->group)->mapWithKeys(fn ($group) => [$group->id => ['id' => $group->id, 'name' => $group->name]])->all();
 
         return view('livewire.device-list', $this->editorViewData() + [
             'devices' => $devices,
@@ -695,6 +723,7 @@ class DeviceList extends Component
             'colspan' => 4 + count(array_filter($cols)),
             'books' => $this->abPickerOpen ? $this->writableBooks() : collect(),
             'groups' => $groups,
+            'filterGroups' => $filterGroups,
             'users' => User::orderBy('username')->get(['id', 'username']),
             'deleteState' => $this->deleteConfirmState(),
             'totalCount' => Device::visibleTo($user)->count(),
@@ -720,13 +749,10 @@ class DeviceList extends Component
                 fn ($q) => $q->visibleTo($user))
             ->with(['group', 'user', 'resolvedStrategy'])
             ->when($this->search !== '', function ($q) {
-                $s = '%'.$this->search.'%';
-                $q->where(function ($q) use ($s) {
-                    $q->where('rustdesk_id', 'like', $s)
-                        ->orWhere('alias', 'like', $s)
-                        ->orWhere('hostname', 'like', $s)
-                        ->orWhere('username', 'like', $s)
-                        ->orWhere('last_online_ip', 'like', $s);
+                $q->where(function ($q) {
+                    UnicodeSearch::apply($q, ['rustdesk_id', 'alias', 'hostname', 'username', 'last_online_ip'], $this->search)
+                        ->orWhereHas('group', fn ($organization) => OrganizationSearch::apply($organization, $this->search))
+                        ->orWhereHas('workGroups', fn ($organization) => OrganizationSearch::apply($organization, $this->search));
                 });
             })
             ->when(! $this->trashed && $this->status === 'online', fn ($q) => $q->online())

@@ -1,7 +1,8 @@
 @php($workPickerGroups = $editorWorkGroups->map(fn ($group) => ['id' => $group->id, 'name' => $group->name, 'inn' => $group->inn])->values())
 <div class="mb-3" x-data="rdWorkGroupPicker($wire, @js($workPickerGroups), @js((bool) auth()->user()?->consoleAllows('group', 'rw')), @js(auth()->user()?->consoleAllows('group', 'rw') ? __('organizations.create') : ''))"
      x-id="['work-input', 'work-options', 'work-label']" @click.outside="close()"
-     @focusout="if (!$el.contains($event.relatedTarget)) close()">
+     @pointerdown="pointerWithin = true" @pointerup.window="pointerWithin = false" @pointercancel.window="pointerWithin = false"
+     @focusout="if (!pointerWithin && !$el.contains($event.relatedTarget)) close()">
     <label class="form-label" :id="$id('work-label')" :for="$id('work-input')">{{ __('organizations.accounting') }}</label>
     <div class="d-flex flex-wrap gap-2 mb-2">
         <template x-if="primary">

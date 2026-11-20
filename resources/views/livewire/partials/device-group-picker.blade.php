@@ -2,7 +2,8 @@
 <div x-data="rdGroupPicker($wire, @js($pickerGroups), @js(__('devices.no_group')), @js(auth()->user()?->consoleAllows('group', 'rw') ? __('devices.create_new_group') : ''), @js((bool) auth()->user()?->consoleAllows('group', 'rw')))"
      x-id="['group-list', 'group-input']"
      @click.outside="close()"
-     @focusout="if (!$el.contains($event.relatedTarget)) close()">
+     @pointerdown="pointerWithin = true" @pointerup.window="pointerWithin = false" @pointercancel.window="pointerWithin = false"
+     @focusout="if (!pointerWithin && !$el.contains($event.relatedTarget)) close()">
     <label class="form-label" :for="$id('group-input')">{{ __('organizations.primary') }}</label>
     <input type="text" class="form-select" autocomplete="off" role="combobox"
            :id="$id('group-input')" :value="open ? query : label"

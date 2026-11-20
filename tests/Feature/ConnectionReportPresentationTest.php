@@ -110,6 +110,56 @@ function reportPresentationWorkbook(ConnectionReport $report): array
     }
 }
 
+it('merges web and owned-device sessions by user ID while keeping unknown sources explicit', function () {
+    reportPresentationSession($this->target, $this->source, $this->a);
+    $web = new Device(['rustdesk_id' => 'web-'.$this->staff->id]);
+    reportPresentationSession($this->target, $web, $this->a, '2026-11-01 06:30:00', '2026-11-01 07:30:00');
+    $unknown = new Device(['rustdesk_id' => 'missing-source']);
+    reportPresentationSession($this->target, $unknown, $this->a, extra: ['from_name' => $this->staff->name]);
+    $key = 'user:'.$this->staff->id;
+    Livewire::test(ConnectionReport::class)
+        ->assertViewHas('operators', fn ($rows) => count($rows) === 2 && $rows[$key]['count'] === 2 && $rows[$key]['seconds'] === 7200)
+        ->assertViewHas('unique', 9000)
+        ->assertSee('Светлана Иванова (missing-source)')
+        ->set('source.user_id', '0')->assertViewHas('count', 0)
+        ->set('source.user_id', (string) $this->staff->id)->assertViewHas('count', 2)
+        ->set('source.rustdesk_id', $this->source->rustdesk_id)->assertViewHas('count', 1);
+    $report = new ConnectionReport;
+    $report->mount();
+    $book = reportPresentationWorkbook($report);
+    expect($book['По сотрудникам']['cells']['A2']['value'])->toBe('Светлана Иванова');
+    expect($book['По сотрудникам']['cells']['B2']['value'])->toBe('2');
+    expect(array_column($book['По сотрудникам']['cells'], 'value'))->toContain('Светлана Иванова (missing-source)');
+});
+
+it('shows current accounting organization names in every report surface without rewriting snapshots', function () {
+    $row = reportPresentationSession($this->target, $this->source, $this->a);
+    $this->a->update(['name' => 'Актуальное название']);
+    Livewire::test(ConnectionReport::class)->set('workGroup', (string) $this->a->id)
+        ->assertViewHas('breakdown', fn ($groups) => $groups[$this->a->id]['name'] === 'Актуальное название')
+        ->assertSee('Актуальное название')->assertDontSee('Узорметалл');
+    expect($row->fresh()->work_group_name)->toBe('Узорметалл');
+    $report = new ConnectionReport;
+    $report->mount();
+    $report->workGroup = (string) $this->a->id;
+    $book = reportPresentationWorkbook($report);
+    expect(array_column($book['Организации']['cells'], 'value'))->toContain('Актуальное название')->not->toContain('Узорметалл');
+    expect(array_column($book['Сеансы']['cells'], 'value'))->toContain('Актуальное название')->not->toContain('Узорметалл');
+    $this->a->delete();
+    Livewire::test(ConnectionReport::class)->assertSee('Узорметалл');
+});
+
+it('does not resolve hidden web identities from a visible target or match users by display name', function () {
+    $viewer = User::create(['username' => 'report-viewer', 'password' => 'test']);
+    $viewer->deviceGroups()->attach($this->primary);
+    $web = new Device(['rustdesk_id' => 'web-'.$this->staff->id]);
+    reportPresentationSession($this->target, $web, $this->a, extra: ['from_name' => 'Reported name']);
+    $this->actingAs($viewer);
+    Livewire::test(ConnectionReport::class)
+        ->assertViewHas('operators', fn ($rows) => isset($rows['device:'.$web->rustdesk_id]) && count($rows) === 1)
+        ->assertSee('Reported name ('.$web->rustdesk_id.')')->assertDontSee('Светлана Иванова');
+});
+
 it('filters session attribution independently of device membership and limits device choices', function () {
     reportPresentationSession($this->target, $this->source, $this->a);
     reportPresentationSession($this->target, $this->source, $this->b);
@@ -200,7 +250,7 @@ it('keeps formula-like text, links, markup, multiline notes and bare IDs literal
     $report = new ConnectionReport;
     $report->mount();
     $book = reportPresentationWorkbook($report);
-    expect($book['Сеансы']['cells']['B2']['value'])->toBe('=1+1');
+    expect($book['Сеансы']['cells']['B2']['value'])->toBe('=1+1 (000101)');
     expect($book['Сеансы']['cells']['C2']['value'])->toBe('18446744073709551614');
     expect($book['Сеансы']['cells']['C2']['type'])->toBe('s');
     expect($book['Сеансы']['cells']['H2']['value'])->toBe($note);

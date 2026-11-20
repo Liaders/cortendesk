@@ -34,13 +34,15 @@ class SessionWorkGroups
         ]);
     }
 
-    public static function label(AuditConnection $row, ?string $locale = null): string
+    public static function label(AuditConnection $row, ?string $locale = null, bool $legacyFallback = true): string
     {
         return match ($row->work_group_status) {
             'required' => __('work_groups.unassigned', [], $locale),
-            'automatic', 'selected' => (string) $row->work_group_name,
+            'automatic', 'selected' => $row->workOrganization?->name ?? (string) $row->work_group_name,
             'ungrouped' => __('report.ungrouped', [], $locale),
-            default => $row->controlledDevice?->group?->name ?? __('report.ungrouped', [], $locale),
+            default => $legacyFallback
+                ? ($row->controlledDevice?->group?->name ?? __('report.ungrouped', [], $locale))
+                : __('console_usability.organization_unknown', [], $locale),
         };
     }
 }
