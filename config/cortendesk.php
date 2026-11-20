@@ -12,6 +12,9 @@ return [
     // by release tags and the Docker image); env can still override.
     'api_version' => env('CORTENDESK_API_VERSION', trim((string) @file_get_contents(base_path('VERSION'))) ?: '0.0.0'),
 
+    // Fork releases change assets without changing the upstream client API version.
+    'asset_version' => trim((string) @file_get_contents(base_path('STATUSDESK_VERSION'))) ?: null,
+
     // Release date of that version (YYYY-MM-DD), written alongside VERSION at
     // release time. Shown in the About dialog; null hides the line.
     'released_at' => trim((string) @file_get_contents(base_path('RELEASED'))) ?: null,
