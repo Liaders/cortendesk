@@ -18,7 +18,11 @@ ARG SERVER_VERSION=1.5.1
 FROM ghcr.io/marcpope/cortendesk-server:${SERVER_VERSION} AS server
 
 # ---- stage 1: composer dependencies -----------------------------------------
-FROM composer:2 AS deps
+FROM php:8.5-cli-alpine AS deps
+# The Composer image may advance its PHP independently of our runtime.
+# Copy only its binary and install locked dependencies on the runtime's minor.
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+RUN apk add --no-cache git unzip
 WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction
