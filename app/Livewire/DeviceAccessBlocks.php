@@ -14,12 +14,15 @@ class DeviceAccessBlocks extends Component
     #[Locked]
     public int $deviceId;
 
+    #[Locked]
+    public ?string $confirmedIp = null;
+
     public string $reason = '';
 
     public function mount(int $deviceId): void
     {
         $this->deviceId = $deviceId;
-        $this->device();
+        $this->confirmedIp = AccessBlock::normalizeIp($this->device()->last_online_ip);
     }
 
     private function device(): Device
@@ -40,7 +43,7 @@ class DeviceAccessBlocks extends Component
         abort_unless(in_array($kind, ['device', 'ip'], true), 422);
         $this->reason = trim($this->reason);
         $this->validate(['reason' => ['required', 'string', 'max:500']]);
-        $value = $kind === 'device' ? $device->rustdesk_id : AccessBlock::normalizeIp($device->last_online_ip);
+        $value = $kind === 'device' ? $device->rustdesk_id : $this->confirmedIp;
         if ($kind === 'ip' && (! $value || ! filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE))) {
             $this->addError('reason', __('access_blocks.public_ip_required'));
 
@@ -64,7 +67,7 @@ class DeviceAccessBlocks extends Component
     public function revoke(int $id): void
     {
         $device = $this->device();
-        $block = AccessBlock::effective()->where('device_id', $device->id)->findOrFail($id);
+        $block = $this->blocksFor($device)->effective()->findOrFail($id);
         DB::transaction(function () use ($block, $device) {
             $block->update(['revoked_at' => now(), 'revoked_by' => auth()->id()]);
             ConsoleAudit::record('access.unblock', $block->kind.': '.$block->value, 'device', (string) $device->id);
@@ -74,12 +77,18 @@ class DeviceAccessBlocks extends Component
     public function render()
     {
         $device = $this->device();
-        $ip = AccessBlock::normalizeIp($device->last_online_ip);
+        $ip = $this->confirmedIp;
 
         return view('livewire.device-access-blocks', [
-            'device' => $device, 'ip' => $ip,
+            'device' => $device, 'ip' => $ip, 'ready' => AccessBlock::enforcementReady(),
             'sharedCount' => $ip ? Device::withTrashed()->where('last_online_ip', $device->last_online_ip)->count() : 0,
-            'blocks' => AccessBlock::where('device_id', $device->id)->latest('id')->limit(20)->get(),
+            'blocks' => $this->blocksFor($device)->with('creator')->latest('id')->limit(20)->get(),
         ]);
+    }
+
+    private function blocksFor(Device $device)
+    {
+        return AccessBlock::where(fn ($q) => $q->where('device_id', $device->id)
+            ->orWhere(fn ($q) => $q->where('kind', 'ip')->where('value', $this->confirmedIp)));
     }
 }

@@ -82,9 +82,11 @@ it('rejects missing reasons and private IPs and never extends duplicate blocks',
     $component = Livewire::test(DeviceAccessBlocks::class, ['deviceId' => $this->device->id]);
     $component->call('block', 'device')->assertHasErrors('reason');
     $this->device->update(['last_online_ip' => '127.0.0.1']);
+    $component = Livewire::test(DeviceAccessBlocks::class, ['deviceId' => $this->device->id]);
     $component->set('reason', 'test')->call('block', 'ip')->assertHasErrors('reason');
     expect(AccessBlock::count())->toBe(0);
     $this->device->update(['last_online_ip' => '8.8.8.8']);
+    $component = Livewire::test(DeviceAccessBlocks::class, ['deviceId' => $this->device->id]);
     $component->set('reason', 'test')->call('block', 'ip');
     $expiry = AccessBlock::sole()->expires_at;
     $this->travel(1)->hours();

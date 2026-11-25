@@ -6,10 +6,16 @@ use App\Services\ServerLink;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Cache;
 
 class AccessBlock extends Model
 {
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     public static function enforcementReady(): bool
     {
         if (! ServerLink::configured()) {

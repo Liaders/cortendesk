@@ -9,11 +9,8 @@
 # setup, and README.md for the reverse-proxy (TLS + wss) notes.
 
 # ---- stage 0: the ID and relay servers ---------------------------------------
-# Prebuilt static binaries, lifted out of a published image — nothing is
-# compiled here. Source: github.com/marcpope/cortendesk-server (AGPL-3.0, a
-# fork of rustdesk-server). Pinned to an exact version on purpose: the server
-# has its own release cadence, and a console release should never quietly
-# change which server it ships.
+# Build the pinned upstream server with our access-policy extension (AGPL-3.0).
+# The patch remains reviewable and independent of upstream version updates.
 FROM rust:alpine AS server
 RUN apk add --no-cache build-base git perl cmake linux-headers pkgconf openssl-dev openssl-libs-static autoconf automake libtool
 WORKDIR /server
