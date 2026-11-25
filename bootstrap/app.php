@@ -14,6 +14,7 @@ use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\ThrottleHealthProbe;
 use App\Http\Middleware\TrustConfiguredProxies;
 use App\Models\TrustedDevice;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -38,7 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->appendToGroup('api', EnforceClientAccessBlocks::class);
-        $middleware->appendToGroup('api', EnforceClientAccessBlocks::class);
+        $middleware->prependToPriorityList(AuthenticatesRequests::class, EnforceClientAccessBlocks::class);
         $middleware->alias([
             'admin' => EnsureAdmin::class,
             'api-token-can' => ApiTokenCan::class,
@@ -48,6 +49,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'health-probe' => ThrottleHealthProbe::class,
         ]);
         $middleware->prependToGroup('web', SessionCookieFollowsScheme::class);
+        $middleware->prependToGroup('web', EnforceClientAccessBlocks::class);
         $middleware->appendToGroup('web', SetLocale::class);
         $middleware->appendToGroup('web', EnsureUserIsActive::class);
         // 2FA enrollment enforcement runs after the active-user check.

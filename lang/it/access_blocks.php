@@ -2,12 +2,12 @@
 
 return [
     'title' => 'Blocco degli accessi',
-    'help' => 'Blocca l’IP per 24 ore per RustDesk, API client e WebSocket. La console web e SSH rimangono accessibili.',
+    'help' => 'Blocca l’IP per 24 ore per tutti i servizi, inclusi console web, API, RustDesk e SSH.',
     'ip_warning' => 'IP: :ip. Dispositivi rilevati: :count. Saranno coinvolti tutti.',
     'reason' => 'Motivo',
     'public_ip_required' => 'È richiesto un indirizzo IP pubblico valido.',
     'denied' => 'L’accesso a questo server è bloccato.',
-    'confirm_ip' => 'Bloccare :ip per 24 ore per tutti i dispositivi?',
+    'confirm_ip' => 'Bloccare :ip per 24 ore per tutti i servizi, inclusi console web e SSH? Se condividi questo IP perderai anche tu l’accesso.',
     'block_ip' => 'Blocca IP per 24 ore',
     'indefinite' => 'Fino alla revoca manuale',
     'revoke' => 'Sblocca',

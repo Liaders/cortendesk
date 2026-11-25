@@ -1,6 +1,7 @@
 """Run only in a disposable Linux network namespace, never the host namespace."""
 import os
 import subprocess
+import socket
 import time
 import unittest
 from firewall_agent_test import agent, ipaddress
@@ -14,6 +15,19 @@ class KernelFirewallTests(unittest.TestCase):
         subprocess.run(['nft', '-f', '-'], input=agent.rules(blocks, now, False), text=True, check=True)
         listing = subprocess.check_output(['nft', 'list', 'table', 'inet', agent.TABLE], text=True)
         self.assertIn('8.8.8.8', listing)
+        # Exercise an arbitrary SSH port, not merely the RustDesk port range.
+        subprocess.run(['ip', 'link', 'set', 'lo', 'up'], check=True)
+        subprocess.run(['ip', 'address', 'add', '8.8.8.8/32', 'dev', 'lo'], check=True)
+        with socket.socket() as server:
+            server.bind(('127.0.0.1', 2222))
+            server.listen()
+            with socket.socket() as blocked:
+                blocked.bind(('8.8.8.8', 0))
+                blocked.settimeout(0.2)
+                with self.assertRaises(TimeoutError):
+                    blocked.connect(('127.0.0.1', 2222))
+            with socket.create_connection(('127.0.0.1', 2222), timeout=1):
+                pass
         self.assertIn('ct original proto-dst', listing)
         self.assertNotIn('dport 22', listing)
         # A refresh atomically replaces only our table, without extending expiry.

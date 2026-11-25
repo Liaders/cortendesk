@@ -2,12 +2,12 @@
 
 return [
     'title' => 'Zugriffssperre',
-    'help' => 'Sperrt die IP für RustDesk-Ports, Client-API und WebSocket für 24 Stunden. Webverwaltung und SSH bleiben erreichbar.',
+    'help' => 'Sperrt die IP für 24 Stunden für alle Dienste, einschließlich Webkonsole, API, RustDesk und SSH.',
     'ip_warning' => 'IP: :ip. Zuletzt hier erkannte Geräte: :count. Alle sind betroffen.',
     'reason' => 'Grund',
     'public_ip_required' => 'Eine öffentliche IP-Adresse ist erforderlich.',
     'denied' => 'Der Zugriff auf diesen Server ist gesperrt.',
-    'confirm_ip' => ':ip für 24 Stunden für alle Geräte sperren?',
+    'confirm_ip' => 'IP :ip für alle Dienste einschließlich Webkonsole und SSH 24 Stunden sperren? Bei gemeinsamer IP verlieren auch Sie den Zugriff.',
     'block_ip' => 'IP für 24 Stunden sperren',
     'indefinite' => 'Bis zur manuellen Aufhebung',
     'revoke' => 'Entsperren',

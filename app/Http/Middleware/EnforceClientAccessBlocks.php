@@ -10,8 +10,8 @@ class EnforceClientAccessBlocks
 {
     public function handle(Request $request, Closure $next)
     {
-        // Infrastructure policy and administrative endpoints must remain reachable.
-        if ($request->is('api/server/*', 'api/v1/*')) {
+        // Only authenticated infrastructure exchange is exempt from IP blocking.
+        if ($request->is('api/server/*')) {
             return $next($request);
         }
         $denied = AccessBlock::denies('ip', AccessBlock::normalizeIp($request->ip()));

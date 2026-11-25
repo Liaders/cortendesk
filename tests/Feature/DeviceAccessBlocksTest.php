@@ -42,15 +42,16 @@ it('records and revokes IP blocks without deleting the device', function () {
     expect(AccessBlock::effective()->count())->toBe(0);
 });
 
-it('expires IP blocks exactly after 24 hours and preserves administrative and policy access', function () {
+it('blocks web administration and client API for 24 hours while preserving authenticated infrastructure exchange', function () {
     $component = Livewire::test(DeviceAccessBlocks::class, ['deviceId' => $this->device->id])
         ->set('reason', 'Repeated abuse')->call('block', 'ip')->assertHasNoErrors();
     $block = AccessBlock::sole();
     expect($block->expires_at->timestamp - $block->created_at->timestamp)->toBe(86400);
     $this->withServerVariables(['REMOTE_ADDR' => '8.8.8.8']);
     $this->postJson('/api/heartbeat', ['id' => 'unrelated'])->assertForbidden();
-    $this->get('/login')->assertStatus(302);
-    $this->getJson('/api/v1/devices')->assertUnauthorized();
+    $this->get('/login')->assertForbidden();
+    $this->get('/devices')->assertForbidden();
+    $this->getJson('/api/v1/devices')->assertForbidden();
     $this->withToken('test-policy-secret')->getJson('/api/server/policy')->assertOk();
     $this->travelTo($block->expires_at);
     $this->postJson('/api/heartbeat', ['id' => 'unrelated'])->assertOk();

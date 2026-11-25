@@ -14,7 +14,6 @@ import urllib.parse
 import urllib.request
 
 TABLE = 'statusdesk_access'
-PORTS = (21115, 21116, 21117, 21118, 21119)
 
 
 def validate(payload, now):
@@ -49,10 +48,7 @@ def rules(blocks, now, exists):
     for chain in ['input', 'forward']:
         lines += [f' chain {chain} {{ type filter hook {chain} priority -10; policy accept;']
         for version, family in [(4, 'ip'), (6, 'ip6')]:
-            for protocol, ports in [('tcp', PORTS), ('udp', (21116,))]:
-                match = f'{protocol} dport' if chain == 'input' else f'meta l4proto {protocol} ct original proto-dst'
-                port_set = ', '.join(str(port) for port in ports)
-                lines += [f'  {family} saddr @blocked{version} {match} {{ {port_set} }} drop']
+            lines += [f'  {family} saddr @blocked{version} drop']
         lines += [' }']
     return '\n'.join(lines + ['}']) + '\n'
 

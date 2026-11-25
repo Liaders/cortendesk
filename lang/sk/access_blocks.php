@@ -2,12 +2,12 @@
 
 return [
     'title' => 'Blokovanie prístupu',
-    'help' => 'Blokuje IP na 24 hodín pre RustDesk, klientské API a WebSocket. Webová správa a SSH zostávajú dostupné.',
+    'help' => 'Blokuje IP na 24 hodín pre všetky služby vrátane webovej konzoly, API, RustDesk a SSH.',
     'ip_warning' => 'IP: :ip. Zistené zariadenia: :count. Blokovanie sa týka všetkých.',
     'reason' => 'Dôvod',
     'public_ip_required' => 'Vyžaduje sa platná verejná IP adresa.',
     'denied' => 'Prístup k tomuto serveru je zablokovaný.',
-    'confirm_ip' => 'Zablokovať :ip na 24 hodín pre všetky zariadenia?',
+    'confirm_ip' => 'Zablokovať :ip na 24 hodín pre všetky služby vrátane webovej konzoly a SSH? Ak zdieľate túto IP, stratíte prístup aj vy.',
     'block_ip' => 'Zablokovať IP na 24 hodín',
     'indefinite' => 'Do ručného zrušenia',
     'revoke' => 'Odblokovať',

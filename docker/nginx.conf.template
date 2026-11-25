@@ -39,6 +39,15 @@ http {
         server_name _;
         root /app/public;
         index index.php;
+        auth_request /_statusdesk_ip_admission;
+        set_real_ip_from 10.0.0.0/8;
+        set_real_ip_from 172.16.0.0/12;
+        set_real_ip_from 192.168.0.0/16;
+        set_real_ip_from 127.0.0.0/8;
+        set_real_ip_from fc00::/7;
+        set_real_ip_from ::1;
+        real_ip_header X-Forwarded-For;
+        real_ip_recursive on;
 
         # WebSocket bridge for the native web client -> hbbs/hbbr.
         # RUSTDESK_WS_HOST is derived from CORTENDESK_ID_SERVER (or set it
@@ -99,6 +108,7 @@ http {
         }
 
         location = /_statusdesk_ip_admission {
+            auth_request off;
             internal;
             fastcgi_pass 127.0.0.1:9000;
             fastcgi_pass_request_body off;
@@ -112,6 +122,17 @@ http {
             fastcgi_param REMOTE_ADDR $remote_addr;
             fastcgi_param HTTP_X_FORWARDED_FOR "";
             fastcgi_param HTTP_X_REAL_IP "";
+        }
+
+        # These routes still require the server secret in Laravel. They keep the
+        # firewall and original hbbs/hbbr synchronized even during an IP block.
+        location ^~ /api/server/ {
+            auth_request off;
+            fastcgi_pass 127.0.0.1:9000;
+            include fastcgi_params;
+            fastcgi_param SCRIPT_FILENAME /app/public/index.php;
+            fastcgi_param SCRIPT_NAME /index.php;
+            fastcgi_param HTTPS $fcgi_https if_not_empty;
         }
 
         # Livewire's temporary-upload endpoint, the only route that takes an

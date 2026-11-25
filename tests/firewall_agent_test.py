@@ -25,14 +25,16 @@ class FirewallTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             agent.validate(payload({'8.8.8.8': 90000}), 100)
 
-    def test_atomic_own_table_and_ports_only(self):
+    def test_atomic_own_table_and_all_protocols(self):
         text = agent.rules({ipaddress.ip_address('8.8.8.8'): 120, ipaddress.ip_address('2001:4860::1'): 130}, 100, True)
         self.assertTrue(text.startswith('delete table inet statusdesk_access\n'))
         self.assertNotIn('flush ruleset', text)
         self.assertIn('8.8.8.8 timeout 20s', text)
         self.assertIn('2001:4860::1 timeout 30s', text)
-        self.assertIn('ct original proto-dst', text)
-        self.assertIn('udp dport { 21116 }', text)
+        self.assertIn('ip saddr @blocked4 drop', text)
+        self.assertIn('ip6 saddr @blocked6 drop', text)
+        self.assertNotIn('dport', text)
+        self.assertNotIn('ct state', text)
         self.assertNotIn('22,', text)
         self.assertNotIn('443', text)
         self.assertNotIn('8080', text)

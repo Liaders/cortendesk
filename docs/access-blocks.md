@@ -26,19 +26,23 @@ HTTP URL with the Console's published port. Redirects and ambient HTTP proxies
 are not followed. Do not expose this secret in command arguments or logs.
 
 Install `scripts/statusdesk/statusdesk-firewall.service` into systemd. Start it
-only after verifying actual host port publication. The supplied rules cover TCP
-21115–21119 and UDP 21116, the image's standard published ports. Custom published
-ports must be explicitly adapted and tested before activation. The Console
+only after reviewing the full-host scope. Rules drop all incoming and forwarded
+traffic from blocked IPv4/IPv6 addresses, regardless of port or protocol. This
+includes SSH (22 and the temporary 2222), HTTPS, client API and Docker ports. The Console
 container needs no privileged mode, Docker socket, host mounts or NET_ADMIN.
 
 The service only replaces its own `inet statusdesk_access` table atomically.
 It never flushes the host ruleset. Input hooks handle native/userland-proxy
-traffic; forward hooks match original destination ports before Docker DNAT.
-Kernel set timeouts expire blocks even if the agent or Console stops. SSH, web
-administration and administrative API remain available. Direct connections
+traffic; forward hooks also cover Docker DNAT without relying on port mappings.
+Kernel set timeouts expire blocks even if the agent or Console stops. Web
+administration, administrative API and SSH are unavailable from the blocked IP.
+Do not block the only administrator address without a verified hosting-console
+or alternate-address recovery route. The agent should use the loopback Console
+URL so it can continue reconciliation even during a full-host block. Direct connections
 between clients are unaffected; relay traffic may stall or disconnect when a
 firewall rule drops its packets. Do not promise immediate session termination.
-Existing WebSocket sessions are not retroactively closed by nginx admission.
+nginx admission alone does not close existing WebSocket sessions, but the host
+firewall also drops their network packets once synchronized.
 
 Policy and acknowledgments are authenticated by the existing server secret at
 `/api/server/firewall/policy` and `/api/server/firewall/applied`. Only the current
@@ -47,17 +51,20 @@ until the host service is installed and running. UI changes are pending until th
 next successful reconciliation. Never install the host service or network rules
 as part of a routine image-only rollout without a separate review.
 
-nginx authorizes new `/ws/id` and `/ws/relay` upgrades through an internal PHP
-subrequest. Public callers cannot access the internal nginx location. Resolved
+nginx checks all Console requests, including static files and both WebSocket
+upgrades, through an internal PHP subrequest. Public callers cannot access the internal nginx location. Resolved
 client IPs must come only through configured trusted proxies, as before. Direct
 RustDesk/WebSocket ports are covered by host rules. The same IP list applies to
-client API requests without widening any access permissions.
+client and administrative API requests without widening any access permissions.
+Authenticated infrastructure exchange remains exempt at the application layer;
+this does not bypass the host-level source-IP firewall.
 
 ## Verification and rollback
 
 Pure Python tests never touch the host network. The nftables integration test
 runs only in a disposable network namespace and refuses the host namespace.
-Container CI tests actual nginx WebSocket rejection and preserves web login.
+Container CI tests nginx rejection for WebSocket, web login, device pages and
+static files, while unrelated addresses remain allowed.
 
 To disable kernel enforcement, stop the agent and remove only its own table:
 `nft delete table inet statusdesk_access`. Existing timeouts also clear remaining

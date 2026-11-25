@@ -28,10 +28,15 @@ try {
             throw new RuntimeException('Unrelated WebSocket request was denied: '.$path);
         }
     }
-    if ($status('/login', '8.8.8.8') !== 200) {
-        throw new RuntimeException('IP blocking affected web administration.');
+    foreach (['/login', '/devices', '/assets/js/group-picker.js'] as $path) {
+        if ($status($path, '8.8.8.8') !== 403) {
+            throw new RuntimeException('Blocked web request was admitted: '.$path);
+        }
     }
-    echo "PASS nginx IP admission for both WebSocket routes; web login preserved.\n";
+    if ($status('/login', '8.8.4.4') !== 200) {
+        throw new RuntimeException('Unrelated web client was denied.');
+    }
+    echo "PASS nginx IP admission: WebSocket, web login, devices and static files blocked; unrelated web clients allowed.\n";
 } finally {
     $block->delete();
 }
