@@ -71,12 +71,12 @@ class DeviceList extends Component
         'cpu' => 'CPU',
         'memory' => 'Memory',
         'uuid' => 'UUID',
-        'first_seen' => 'First Seen',
         'last_seen' => 'Last Seen',
+        'first_seen' => 'Registered',
     ];
 
-    /** What the table showed before it was configurable — and still the default. */
-    public const DEFAULT_COLUMNS = ['device', 'alias', 'group', 'owner', 'version', 'last_seen'];
+    /** Default columns include the original device registration date. */
+    public const DEFAULT_COLUMNS = ['device', 'alias', 'group', 'owner', 'version', 'last_seen', 'first_seen'];
 
     /** Columns, and sorts, only admins get: who owns what, and which policy applies. */
     public const ADMIN_COLUMNS = ['owner', 'strategy'];
@@ -98,8 +98,8 @@ class DeviceList extends Component
         'version' => 'devices.version',
         'os' => 'devices.os',
         'ip' => '__ip__',
-        'first_seen' => 'devices.created_at',
         'last_seen' => 'devices.last_online_at',
+        'first_seen' => 'devices.created_at',
         'status' => '__presence__',
     ];
 

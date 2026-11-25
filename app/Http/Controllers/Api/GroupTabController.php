@@ -94,6 +94,7 @@ class GroupTabController extends Controller
                     // Not read by stock clients; for customised ones that
                     // want the console's name for a device (issue #28).
                     'alias' => (string) $d->alias,
+                    'created_at' => $d->created_at?->copy()->utc()->format('Y-m-d\TH:i:s\Z'),
                     'info' => [
                         'username' => (string) $d->username,
                         'os' => (string) $d->os,

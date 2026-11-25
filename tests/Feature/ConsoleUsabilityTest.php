@@ -67,3 +67,13 @@ it('ships every new interface label in all supported languages', function () {
         }
     }
 });
+
+it('sorts registration dates in both directions and places the column after last seen', function () {
+    $this->device->forceFill(['created_at' => '2026-01-01 00:00:00'])->saveQuietly();
+    $new = Device::withoutEvents(fn () => Device::create(['rustdesk_id' => '000999', 'uuid' => 'new-device', 'status' => 'active']));
+    $new->forceFill(['created_at' => '2026-11-25 09:00:00'])->saveQuietly();
+    Livewire::test(DeviceList::class)->call('sortBy', 'first_seen')
+        ->assertViewHas('devices', fn ($rows) => $rows->first()->id === $this->device->id)
+        ->call('sortBy', 'first_seen')->assertViewHas('devices', fn ($rows) => $rows->first()->id === $new->id)
+        ->assertSeeInOrder(['sortBy(\'last_seen\')', 'sortBy(\'first_seen\')'], false);
+});

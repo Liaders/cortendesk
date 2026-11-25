@@ -38,6 +38,11 @@
             </div></fieldset>
         @endforeach
         </div>
+        <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" id="exclude-internal" wire:model.live="excludeInternal">
+            <label class="form-check-label" for="exclude-internal">{{ __('report_preferences.exclude_internal') }}</label>
+        </div>
+        <p class="text-muted fs-13 mt-2">{{ __('report_preferences.saved_hint') }}</p>
         <details class="text-muted mt-3 mb-3"><summary>{{ __('report.method') }}</summary><p class="mt-2">{{ __('report.help', ['timezone' => \App\Livewire\ConnectionReport::TIMEZONE_LABEL]) }}</p>
         <p>{{ __('report.attribution') }}</p><p>{{ __('console_usability.report_note') }}</p><p>{{ __('work_groups.report_help') }}</p></details>
         <button class="btn btn-primary" wire:click="exportXlsx" wire:loading.attr="disabled">{{ __('report.export_xlsx') }}</button>

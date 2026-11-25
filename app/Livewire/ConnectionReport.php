@@ -40,10 +40,25 @@ class ConnectionReport extends Component
 
     public string $workGroup = '';
 
+    public bool $excludeInternal = false;
+
     public function mount(): void
     {
         $this->authorizeConsole('audit');
         $this->period('this');
+        $saved = auth()->user()->connection_report_filters;
+        if (is_array($saved)) {
+            $this->source = $this->cleanFilters($saved['source'] ?? [], ['device_group_id', 'user_id', 'user_group_id', 'rustdesk_id']);
+            $this->target = $this->cleanFilters($saved['target'] ?? [], ['user_id', 'user_group_id', 'rustdesk_id']);
+            $group = $saved['workGroup'] ?? '';
+            $this->workGroup = is_string($group) && preg_match('/^(?:[1-9][0-9]*|unassigned)?$/D', $group) ? $group : '';
+            $this->excludeInternal = ($saved['excludeInternal'] ?? false) === true;
+        }
+    }
+
+    private function cleanFilters(mixed $filters, array $keys): array
+    {
+        return is_array($filters) ? array_filter(array_intersect_key($filters, array_flip($keys)), fn ($value) => is_string($value) && mb_strlen($value) <= 255) : [];
     }
 
     public function period(string $period): void
@@ -57,6 +72,7 @@ class ConnectionReport extends Component
 
     public function updated(string $property): void
     {
+        $this->authorizeConsole('audit');
         foreach (['source', 'target'] as $side) {
             if (($property === 'workGroup' && $side === 'target')
                 || (str_starts_with($property, $side.'.') && $property !== $side.'.rustdesk_id')) {
@@ -67,6 +83,14 @@ class ConnectionReport extends Component
             }
         }
         $this->resetPage();
+        if (in_array($property, ['source', 'target', 'workGroup', 'excludeInternal'], true) || str_starts_with($property, 'source.') || str_starts_with($property, 'target.')) {
+            auth()->user()->forceFill(['connection_report_filters' => [
+                'source' => $this->cleanFilters($this->source, ['device_group_id', 'user_id', 'user_group_id', 'rustdesk_id']),
+                'target' => $this->cleanFilters($this->target, ['user_id', 'user_group_id', 'rustdesk_id']),
+                'workGroup' => preg_match('/^(?:[1-9][0-9]*|unassigned)?$/D', $this->workGroup) ? $this->workGroup : '',
+                'excludeInternal' => $this->excludeInternal,
+            ]])->save();
+        }
     }
 
     private function date(string $value): ?CarbonImmutable
@@ -98,6 +122,7 @@ class ConnectionReport extends Component
                 }
             }],
             'workGroup' => ['nullable', 'string', 'max:30', 'regex:/^(?:[1-9][0-9]*|unassigned)?$/'],
+            'excludeInternal' => ['boolean'],
             'source' => 'array:device_group_id,user_id,user_group_id,rustdesk_id',
             'target' => 'array:user_id,user_group_id,rustdesk_id',
             'source.*' => 'nullable|string|max:255', 'target.*' => 'nullable|string|max:255',
@@ -186,6 +211,17 @@ class ConnectionReport extends Component
             });
         }
 
+        if ($this->excludeInternal) {
+            // Compare non-null saved session attribution with the visible source's primary organization.
+            // No owner-group inference or device-membership fallback for legacy sessions.
+            $internal = $this->devices()->selectRaw('1')
+                ->whereColumn('devices.rustdesk_id', 'audit_connections.from_peer')
+                ->whereNotNull('devices.device_group_id')
+                ->whereColumn('devices.device_group_id', 'audit_connections.work_group_id')
+                ->whereIn('audit_connections.work_group_status', ['automatic', 'selected']);
+            $q->whereNotExists($internal->toBase());
+        }
+
         return $q;
     }
 
@@ -245,6 +281,7 @@ class ConnectionReport extends Component
         foreach ($this->filterSummary($data) as $filter) {
             $summary[] = [$text($filter['label']), $text($filter['value'])];
         }
+        $summary[] = [$text(__('report_preferences.exclude_internal')), $text($this->excludeInternal ? __('report_preferences.yes') : __('report_preferences.no'))];
         array_push($summary,
             [$text(__('report.matching_sessions')), ReportWorkbook::number($matchedCount)],
             [$text(__('report.exported_sessions')), ReportWorkbook::number($data['count'])],

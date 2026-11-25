@@ -29,7 +29,7 @@ return [
     'col_alias' => 'Názov',
     'col_cpu' => 'CPU',
     'col_device' => 'Zariadenie',
-    'col_first_seen' => 'Prvýkrát videné',
+    'col_first_seen' => 'Zaregistrované',
     'col_group' => 'Hlavná organizácia',
     'col_id' => 'ID',
     'col_ip' => 'IP',

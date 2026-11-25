@@ -29,7 +29,7 @@ return [
     'col_alias' => 'Alias',
     'col_cpu' => 'CPU',
     'col_device' => 'Dispositivo',
-    'col_first_seen' => 'Primera vez',
+    'col_first_seen' => 'Registrado',
     'col_group' => 'Organización principal',
     'col_id' => 'ID',
     'col_ip' => 'IP',

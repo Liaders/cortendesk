@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\ConnectionLog;
 use App\Livewire\ConnectionReport;
 use App\Models\AuditConnection;
 use App\Models\Device;
@@ -124,6 +125,7 @@ it('merges web and owned-device sessions by user ID while keeping unknown source
         ->set('source.user_id', '0')->assertViewHas('count', 0)
         ->set('source.user_id', (string) $this->staff->id)->assertViewHas('count', 2)
         ->set('source.rustdesk_id', $this->source->rustdesk_id)->assertViewHas('count', 1);
+    $this->admin->forceFill(['connection_report_filters' => null])->save();
     $report = new ConnectionReport;
     $report->mount();
     $book = reportPresentationWorkbook($report);
@@ -320,5 +322,78 @@ it('exports translated workbook labels for every supported locale', function () 
         expect(array_keys($book))->toBe([__('report.sheet_summary'), __('report.sheet_organizations'), __('report.sheet_operators'), __('report.sheet_sessions')]);
         expect($book[__('report.sheet_summary')]['cells']['B1']['value'])->toBe(__('report.value'));
         expect($book[__('report.sheet_summary')]['cells']['B5']['value'])->toBe(__('report.all_organizations'));
+    }
+});
+
+it('saves filters per user while reopening with the full current month', function () {
+    Livewire::test(ConnectionReport::class)->set('source.user_id', (string) $this->staff->id)
+        ->set('workGroup', (string) $this->a->id)->set('excludeInternal', true)
+        ->set('dateFrom', '2.11.2026')->set('dateTo', '3.11.2026');
+    expect($this->admin->fresh()->connection_report_filters)->not->toHaveKeys(['dateFrom', 'dateTo']);
+    $this->travelTo(CarbonImmutable::parse('2026-11-30 22:00:00', 'UTC'));
+    Livewire::test(ConnectionReport::class)->assertSet('dateFrom', '1.12.2026')->assertSet('dateTo', '31.12.2026')
+        ->assertSet('source.user_id', (string) $this->staff->id)->assertSet('workGroup', (string) $this->a->id)->assertSet('excludeInternal', true);
+    $this->actingAs($this->staff);
+    $this->staff->update(['is_admin' => true]);
+    Livewire::test(ConnectionReport::class)->assertSet('source', [])->assertSet('workGroup', '')->assertSet('excludeInternal', false);
+});
+
+it('excludes only saved internal attribution in report totals and XLSX', function () {
+    reportPresentationSession($this->target, $this->source, $this->support);
+    reportPresentationSession($this->target, $this->source, $this->a);
+    reportPresentationSession($this->target, $this->source, null);
+    reportPresentationSession($this->target, new Device(['rustdesk_id' => 'missing-source']), $this->support);
+    reportPresentationSession($this->target, new Device(['rustdesk_id' => 'web-'.$this->staff->id]), $this->support);
+    reportPresentationSession($this->target, reportPresentationDevice('000404'), null);
+    Livewire::test(ConnectionReport::class)->assertViewHas('count', 6)
+        ->set('excludeInternal', true)->assertViewHas('count', 5)->assertViewHas('total', 18000)
+        ->assertViewHas('operators', fn ($rows) => array_sum(array_column($rows, 'count')) === 5)
+        ->assertViewHas('breakdown', fn ($rows) => array_sum(array_column($rows, 'count')) === 5);
+    $report = new ConnectionReport;
+    $report->mount();
+    $book = reportPresentationWorkbook($report);
+    expect(array_column($book['Сводка']['cells'], 'value'))->toContain(__('report_preferences.exclude_internal'), __('report_preferences.yes'));
+    $ids = array_filter(array_keys($book['Сеансы']['cells']), fn ($cell) => preg_match('/^A[2-9][0-9]*$/', $cell));
+    expect(count($ids))->toBe(5);
+});
+
+it('uses session attribution rather than the target primary organization in the connection log', function () {
+    reportPresentationSession($this->target, $this->source, $this->a);
+    Livewire::test(ConnectionLog::class)->assertSee($this->a->name)->assertDontSee($this->primary->name);
+    $this->a->update(['name' => 'Renamed organization']);
+    Livewire::test(ConnectionLog::class)->assertSee('Renamed organization');
+});
+
+it('keeps restored report preferences inside current permissions', function () {
+    reportPresentationSession($this->target, $this->source, $this->a);
+    $role = Role::create(['name' => 'Reader', 'permissions' => ['audit' => 'r', 'device' => 'r']]);
+    $reader = User::create(['username' => 'report-reader', 'password' => 'test', 'role_id' => $role->id]);
+    $reader->forceFill(['connection_report_filters' => ['target' => ['rustdesk_id' => $this->target->rustdesk_id], 'workGroup' => (string) $this->a->id, 'excludeInternal' => true]])->save();
+    $this->actingAs($reader);
+    Livewire::test(ConnectionReport::class)->assertViewHas('count', 0);
+    $role->update(['permissions' => ['device' => 'r']]);
+    $reader->unsetRelation('role');
+    Livewire::test(ConnectionReport::class)->assertForbidden();
+});
+
+it('does not infer internal attribution from additional groups or legacy and active sessions', function () {
+    $this->source->workGroups()->attach($this->a);
+    reportPresentationSession($this->target, $this->source, $this->a);
+    $legacy = reportPresentationSession($this->target, $this->source, $this->support);
+    $legacy->forceFill(['work_group_status' => null])->saveQuietly();
+    reportPresentationSession($this->target, $this->source, $this->support, end: null);
+    reportPresentationSession($this->target, $this->source, $this->a, end: null);
+    Livewire::test(ConnectionReport::class)->set('excludeInternal', true)
+        ->assertViewHas('count', 3)->assertViewHas('active', 1)->assertViewHas('total', 7200)
+        ->assertViewHas('unique', 3600);
+});
+
+it('provides every report preference translation in all supported locales', function () {
+    foreach (array_keys(User::LOCALES) as $locale) {
+        $messages = require base_path('lang/'.$locale.'/report_preferences.php');
+        expect(array_keys($messages))->toBe(['exclude_internal', 'saved_hint', 'yes', 'no']);
+        foreach ($messages as $message) {
+            expect(trim($message))->not->toBe('');
+        }
     }
 });

@@ -57,6 +57,7 @@
                             @if ($conn->controlledDevice?->alias)
                                 <span class="rd-cell-sub">{{ $conn->controlledDevice->alias }}</span>
                             @endif
+                            <span class="rd-cell-sub">{{ \App\Services\SessionWorkGroups::label($conn, legacyFallback: false) }}</span>
                         </td>
                         <td>
                             <span class="rd-cell-title">{{ $conn->from_peer ?: '—' }}</span>
@@ -113,6 +114,7 @@
                             @if ($conn->controlledDevice?->alias)
                                 <span class="rd-cell-sub">{{ $conn->controlledDevice->alias }}</span>
                             @endif
+                            <span class="rd-cell-sub">{{ \App\Services\SessionWorkGroups::label($conn, legacyFallback: false) }}</span>
                             <span class="rd-mini-sub">
                                 {{ __('logs.from_peer', ['peer' => $conn->from_peer ?: '—']) }}@if ($conn->from_name) ({{ $conn->from_name }})@endif
                             </span>

@@ -55,7 +55,7 @@ The client must keep selection state per connection, not globally per target. On
 - Membership is the union of a device's primary group and its additional work groups. A device can appear in multiple organizations. A redundant primary/additional binding produces one entry in that organization. A visible device without a primary group still appears in its additional organizations. Devices without any group do not appear in this listing.
 - Both membership branches start from the existing `Device::visibleTo(user)` scope. The current owner and existing primary-group/user-group grants determine visibility; additional work-group membership does not. Pending and soft-deleted devices are excluded, including for administrators. An organization with no visible devices is omitted, even if it exists or was explicitly granted. The name of an additional organization is accounting metadata for its visible devices; other devices in that organization remain hidden.
 - Fetch each organization's devices by matching these ids against the existing authorized peer data. Load all required pages of the existing peer list independently. Do not derive membership from `device_group_name`, do not merge organizations by name, and do not treat membership as an access grant. Refresh or clear account-scoped organization data on login changes and permission changes.
-- This endpoint is read-only. It does not assign any organization to a session. Existing `/api/device-group/accessible`, `/api/peers` and `/api/users` response shapes and primary-group behavior are unchanged; Accessible devices and Colleagues keep their existing contracts.
+- This endpoint is read-only. It does not assign any organization to a session. Existing `/api/device-group/accessible`, `/api/peers` and `/api/users` access scopes and primary-group behavior are unchanged; Accessible devices and Colleagues keep their existing behavior. `/api/peers` additionally exposes the nullable registration date documented below.
 - On servers without this endpoint (404/405/501), retain the client's existing Organizations behavior rather than inferring additional memberships. An authentication error must not reuse another account's cached result.
 
 ### Suggesting an organization for a new connection
@@ -291,3 +291,50 @@ This increment adds `device_work_groups` and three nullable attribution columns 
 Regression surface: the shared device editor and its create/reset path, the successful-login audit writer, and the connection report/export paths. New device-group relations are never used by access-control or strategy-resolution queries. No client source, connection protocol, production data or production container is modified in this increment.
 
 The v2 management increment additionally creates `client_organization_requests`, an additive receipt table for idempotent creation/attachment. Existing device/audit records are not rewritten by the migration. Keep this table when rolling back an image; do not run its down migration in production, because deleting receipts loses retry guarantees. Retain backups and review schema-equality deployment helpers before any later deployment. New first primary bindings intentionally use existing primary-group strategy/access resolution; additional bindings remain excluded from it.
+
+## Device registration dates and report preferences
+
+`GET /api/peers` now includes `created_at` for every returned peer on every page.
+It is the original `devices.created_at`, serialized as UTC ISO 8601, for example
+`"2026-11-25T09:15:00Z"`, or JSON `null` when unknown. Heartbeat, alias edits,
+and organization attachment do not replace it. Existing Bearer authentication,
+visibility, ordering, pagination and all other peer fields retain their behavior.
+The client may use this nullable value to build its own last-24-hours view.
+
+The Devices table exposes **Registered** immediately after **Last seen**, sorted
+by `devices.created_at` in either direction. The column is enabled by default.
+The migration also enables it once in existing custom column selections; users
+may subsequently hide it again. Unknown dates display a dash.
+
+Connection report filters below the date controls are automatically stored in
+`users.connection_report_filters` for the authenticated account only. Source,
+target, accounting organization and `excludeInternal` are saved. Dates are never
+saved: each new visit starts with the entire current month in GMT+3, including
+when the month has changed since the preceding visit. Date edits and month
+presets remain usable during the current visit. Restored filters still run
+through existing authorization and device visibility scopes.
+
+**Exclude connections within the same organization** removes a session only
+when its confirmed accounting organization (`selected` or `automatic`) equals
+the currently visible source device's non-null primary organization ID. The
+target device's primary or additional memberships are not used for this
+comparison. User groups are not involved. Missing source devices, hidden source
+devices, browser-only sources, missing organizations and legacy sessions without
+confirmed attribution remain in the report; the server does not guess their
+organization. Changing a source device's primary organization can therefore
+change this optional filter's result for past sessions. No session history is
+rewritten. The shared query applies to displayed sessions, active counts,
+duration and overlap totals, organization/operator summaries, XLSX rows and the
+export-limit count. XLSX summary records whether the option was enabled.
+
+The Connections log displays the session accounting organization below the
+controlled device alias on desktop and mobile, using the same labeling as Active
+sessions. Renamed organizations display their current name. Unselected and
+unknown legacy attribution are explicit; primary-device membership is not used
+as a fallback.
+
+Deployment requires the new nullable user-preference migration. It does not
+change device or session records. An image rollback can leave the added nullable
+column in place; it is ignored by the previous image. Do not run migration down
+as part of an ordinary rollback. These changes are prepared locally and require
+separate deployment authorization.

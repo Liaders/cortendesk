@@ -234,7 +234,7 @@
                     @if ($cols['cpu'])<th>CPU</th>@endif
                     @if ($cols['memory'])<th>Memory</th>@endif
                     @if ($cols['uuid'])<th>UUID</th>@endif
-                    @foreach (['first_seen' => 'First Seen', 'last_seen' => 'Last Seen'] as $key => $label)
+                    @foreach (['last_seen' => 'Last Seen', 'first_seen' => 'Registered'] as $key => $label)
                         @if ($cols[$key])
                             <x-sortable-th :field="$key" :sort="$sortField" :dir="$sortDirection">{{ __('devices.col_'.$key) }}</x-sortable-th>
                         @endif
@@ -325,9 +325,6 @@
                         @if ($cols['uuid'])
                             <td><span class="rd-mono fs-13" title="{{ $device->uuid }}">{{ $device->uuid ? \Illuminate\Support\Str::limit($device->uuid, 12) : '—' }}</span></td>
                         @endif
-                        @if ($cols['first_seen'])
-                            <td><span title="{{ $device->created_at }}">{{ $device->created_at?->format('Y-m-d') ?? '—' }}</span></td>
-                        @endif
                         @if ($cols['last_seen'])
                             <td>
                                 @if (! $device->last_online_at && ! $device->canBeControlled())
@@ -338,6 +335,9 @@
                                     </span>
                                 @endif
                             </td>
+                        @endif
+                        @if ($cols['first_seen'])
+                            <td><span title="{{ $device->created_at }}">{{ $device->created_at?->timezone(\App\Livewire\ConnectionReport::TIMEZONE)->format('j.n.Y') ?? '—' }}</span></td>
                         @endif
                         <td>
                             @if ($trashed)

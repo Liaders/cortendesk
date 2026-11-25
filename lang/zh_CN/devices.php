@@ -29,7 +29,7 @@ return [
     'col_alias' => '别名',
     'col_cpu' => 'CPU',
     'col_device' => '设备',
-    'col_first_seen' => '首次出现',
+    'col_first_seen' => '注册时间',
     'col_group' => '主要组织',
     'col_id' => 'ID',
     'col_ip' => 'IP',

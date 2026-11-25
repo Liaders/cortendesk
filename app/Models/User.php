@@ -71,6 +71,7 @@ class User extends Authenticatable
             'totp_confirmed_at' => 'datetime',
             // Devices-screen column selection (issue #16); null = defaults.
             'devices_columns' => 'array',
+            'connection_report_filters' => 'array',
             // First-run guide: either stamp means stop offering it.
             'setup_wizard_dismissed_at' => 'datetime',
             'setup_wizard_completed_at' => 'datetime',

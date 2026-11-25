@@ -29,7 +29,7 @@ return [
     'col_alias' => 'Псевдоним',
     'col_cpu' => 'ЦП',
     'col_device' => 'Устройство',
-    'col_first_seen' => 'Впервые',
+    'col_first_seen' => 'Зарегистрировано',
     'col_group' => 'Основная организация',
     'col_id' => 'ID',
     'col_ip' => 'IP',

@@ -29,7 +29,7 @@ return [
     'col_alias' => 'Álnév',
     'col_cpu' => 'CPU',
     'col_device' => 'Eszköz',
-    'col_first_seen' => 'Először látva',
+    'col_first_seen' => 'Regisztrálva',
     'col_group' => 'Elsődleges szervezet',
     'col_id' => 'Azonosító',
     'col_ip' => 'IP',
