@@ -376,7 +376,7 @@ it('keeps restored report preferences inside current permissions', function () {
     Livewire::test(ConnectionReport::class)->assertForbidden();
 });
 
-it('does not infer internal attribution from additional groups or legacy and active sessions', function () {
+it('keeps additional memberships separate and uses target primary membership for legacy sessions only', function () {
     $this->source->workGroups()->attach($this->a);
     reportPresentationSession($this->target, $this->source, $this->a);
     $legacy = reportPresentationSession($this->target, $this->source, $this->support);
@@ -386,6 +386,40 @@ it('does not infer internal attribution from additional groups or legacy and act
     Livewire::test(ConnectionReport::class)->set('excludeInternal', true)
         ->assertViewHas('count', 3)->assertViewHas('active', 1)->assertViewHas('total', 7200)
         ->assertViewHas('unique', 3600);
+});
+
+it('excludes legacy internal sessions consistently in organization filters, totals and XLSX without changing history', function () {
+    $this->target->update(['device_group_id' => $this->support->id]);
+    $legacy = reportPresentationSession($this->target, $this->source, null);
+    $legacy->forceFill(['work_group_status' => null])->saveQuietly();
+    $before = $legacy->fresh()->getRawOriginal();
+    reportPresentationSession($this->target, $this->source, $this->support);
+    $component = Livewire::test(ConnectionReport::class)
+        ->set('source.device_group_id', (string) $this->support->id)
+        ->set('workGroup', (string) $this->support->id)
+        ->assertViewHas('count', 2)->assertViewHas('total', 7200)
+        ->set('excludeInternal', true)->assertViewHas('count', 0)->assertViewHas('total', 0)
+        ->assertViewHas('unique', 0)->assertViewHas('operators', [])->assertViewHas('breakdown', [])
+        ->assertViewHas('rows', fn ($rows) => $rows->total() === 0);
+    $report = new ConnectionReport;
+    $report->mount();
+    $book = reportPresentationWorkbook($report);
+    expect(array_keys($book['Сеансы']['cells']))->toBe(['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1']);
+    expect($legacy->fresh()->getRawOriginal())->toBe($before);
+    $component->set('excludeInternal', false)->assertViewHas('count', 2);
+});
+
+it('preserves explicit unassigned and external sessions even when target primary organization matches the source', function () {
+    $this->target->update(['device_group_id' => $this->support->id]);
+    reportPresentationSession($this->target, $this->source, null);
+    reportPresentationSession($this->target, $this->source, $this->a);
+    $external = reportPresentationSession($this->other, $this->source, null);
+    $external->forceFill(['work_group_status' => null])->saveQuietly();
+    $internal = reportPresentationSession($this->target, $this->source, null, end: null);
+    $internal->forceFill(['work_group_status' => null])->saveQuietly();
+    Livewire::test(ConnectionReport::class)->assertViewHas('count', 4)
+        ->set('excludeInternal', true)->assertViewHas('count', 3)->assertViewHas('active', 0)
+        ->assertViewHas('total', 10800)->assertViewHas('unique', 3600);
 });
 
 it('provides every report preference translation in all supported locales', function () {

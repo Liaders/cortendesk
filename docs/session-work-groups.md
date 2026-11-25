@@ -316,12 +316,14 @@ through existing authorization and device visibility scopes.
 
 **Exclude connections within the same organization** removes a session only
 when its confirmed accounting organization (`selected` or `automatic`) equals
-the currently visible source device's non-null primary organization ID. The
-target device's primary or additional memberships are not used for this
-comparison. User groups are not involved. Missing source devices, hidden source
-devices, browser-only sources, missing organizations and legacy sessions without
-confirmed attribution remain in the report; the server does not guess their
-organization. Changing a source device's primary organization can therefore
+the currently visible source device's non-null primary organization ID. For
+legacy sessions with a null attribution status, the comparison uses the target
+device's current primary organization, matching the report's existing organization
+filter and summary fallback. This fallback never applies to explicit `required`
+or `ungrouped` states or replaces a confirmed selection. Additional memberships
+and user groups are not involved. Missing source devices, hidden source devices,
+browser-only sources and missing organizations remain in the report.
+Changing a source or legacy target device's primary organization can therefore
 change this optional filter's result for past sessions. No session history is
 rewritten. The shared query applies to displayed sessions, active counts,
 duration and overlap totals, organization/operator summaries, XLSX rows and the

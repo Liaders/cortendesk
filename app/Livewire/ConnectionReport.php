@@ -212,13 +212,19 @@ class ConnectionReport extends Component
         }
 
         if ($this->excludeInternal) {
-            // Compare non-null saved session attribution with the visible source's primary organization.
-            // No owner-group inference or device-membership fallback for legacy sessions.
+            // Use the same legacy fallback as organization filtering and report presentation.
+            // Confirmed and explicitly unassigned sessions never inherit target membership.
             $internal = $this->devices()->selectRaw('1')
                 ->whereColumn('devices.rustdesk_id', 'audit_connections.from_peer')
                 ->whereNotNull('devices.device_group_id')
-                ->whereColumn('devices.device_group_id', 'audit_connections.work_group_id')
-                ->whereIn('audit_connections.work_group_status', ['automatic', 'selected']);
+                ->where(function ($q) {
+                    $q->where(fn ($q) => $q
+                        ->whereIn('audit_connections.work_group_status', ['automatic', 'selected'])
+                        ->whereColumn('devices.device_group_id', 'audit_connections.work_group_id'))
+                        ->orWhere(fn ($q) => $q->whereNull('audit_connections.work_group_status')
+                            ->where('devices.device_group_id', Device::query()->select('device_group_id')
+                                ->whereColumn('devices.rustdesk_id', 'audit_connections.rustdesk_id')->limit(1)));
+                });
             $q->whereNotExists($internal->toBase());
         }
 
