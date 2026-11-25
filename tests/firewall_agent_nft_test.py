@@ -28,10 +28,11 @@ class KernelFirewallTests(unittest.TestCase):
                     blocked.connect(('127.0.0.1', 2222))
             with socket.create_connection(('127.0.0.1', 2222), timeout=1):
                 pass
-        self.assertIn('ct original proto-dst', listing)
-        self.assertNotIn('dport 22', listing)
+        self.assertIn('ip saddr @blocked4 drop', listing)
+        self.assertIn('ip6 saddr @blocked6 drop', listing)
+        self.assertNotIn('dport', listing)
         # A refresh atomically replaces only our table, without extending expiry.
-        subprocess.run(['nft', '-f', '-'], input=agent.rules(blocks, now, True), text=True, check=True)
+        subprocess.run(['nft', '-f', '-'], input=agent.rules(blocks, int(time.time()), True), text=True, check=True)
         time.sleep(3)
         listing = subprocess.check_output(['nft', 'list', 'table', 'inet', agent.TABLE], text=True)
         self.assertNotIn('8.8.8.8', listing)
