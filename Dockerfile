@@ -14,8 +14,17 @@
 # fork of rustdesk-server). Pinned to an exact version on purpose: the server
 # has its own release cadence, and a console release should never quietly
 # change which server it ships.
-ARG SERVER_VERSION=1.5.1
-FROM ghcr.io/marcpope/cortendesk-server:${SERVER_VERSION} AS server
+FROM rust:alpine AS server
+RUN apk add --no-cache build-base git perl cmake linux-headers pkgconf openssl-dev openssl-libs-static autoconf automake libtool
+WORKDIR /server
+# Exact upstream source plus our reviewable AGPL patch. No production downloads.
+RUN git init . && git remote add origin https://github.com/marcpope/cortendesk-server.git \
+    && git fetch --depth 1 origin a0b469eddc56b9485d85926ef27816332ab02463 \
+    && git checkout --detach FETCH_HEAD && git submodule update --init --recursive
+COPY server-patches/access-blocks.patch /tmp/access-blocks.patch
+RUN git apply --check /tmp/access-blocks.patch && git apply /tmp/access-blocks.patch \
+    && cargo test --locked --lib && cargo build --locked --release --bins \
+    && mkdir -p /usr/bin && cp target/release/hbbs target/release/hbbr target/release/cortendesk-utils /usr/bin/
 
 # ---- stage 1: composer dependencies -----------------------------------------
 FROM php:8.5-cli-alpine AS deps

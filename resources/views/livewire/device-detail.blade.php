@@ -1,4 +1,7 @@
 <div wire:poll.15s>
+    @if (auth()->user()->is_admin)
+        <livewire:device-access-blocks :device-id="$deviceId" :key="'device-access-'.$deviceId" />
+    @endif
     {{-- Header: who this is and how to reach it. --}}
     <div class="card">
         <div class="card-body d-flex flex-wrap align-items-center gap-3">

@@ -3,6 +3,7 @@
 use App\Http\Controllers\HealthController;
 use App\Http\Middleware\ApiTokenCan;
 use App\Http\Middleware\ConsoleCan;
+use App\Http\Middleware\EnforceClientAccessBlocks;
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\RequireEmailAddress;
@@ -36,6 +37,8 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->appendToGroup('api', EnforceClientAccessBlocks::class);
+        $middleware->appendToGroup('api', EnforceClientAccessBlocks::class);
         $middleware->alias([
             'admin' => EnsureAdmin::class,
             'api-token-can' => ApiTokenCan::class,
