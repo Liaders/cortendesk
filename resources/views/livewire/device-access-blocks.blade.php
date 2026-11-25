@@ -7,7 +7,6 @@
     <input id="block-reason-{{ $deviceId }}" class="form-control mb-2" wire:model="reason" maxlength="500">
     @error('reason')<p class="text-danger">{{ $message }}</p>@enderror
     <div class="d-flex flex-wrap gap-2">
-        <button class="btn btn-outline-danger" wire:click="block('device')" wire:confirm="{{ __('access_blocks.confirm_device') }}" wire:loading.attr="disabled">{{ __('access_blocks.block_device') }}</button>
         <button class="btn btn-outline-danger" wire:click="block('ip')" wire:confirm="{{ __('access_blocks.confirm_ip', ['ip' => $ip ?: '—']) }}" wire:loading.attr="disabled" @disabled(!$ip)>{{ __('access_blocks.block_ip') }}</button>
     </div>
     @foreach ($blocks as $block)

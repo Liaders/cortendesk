@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\ClientAuthController;
 use App\Http\Controllers\Api\ClientOidcController;
 use App\Http\Controllers\Api\ClientOrganizationsController;
 use App\Http\Controllers\Api\DeviceAliasController;
+use App\Http\Controllers\Api\FirewallPolicyController;
 use App\Http\Controllers\Api\GroupTabController;
 use App\Http\Controllers\Api\OrganizationsController;
 use App\Http\Controllers\Api\ServerLinkController;
@@ -20,6 +21,12 @@ use App\Http\Controllers\Api\SyncController;
 use App\Http\Controllers\Api\WebClientController;
 use App\Http\Middleware\VerifyServerSecret;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/statusdesk/ip-admission', [FirewallPolicyController::class, 'admission']);
+Route::middleware(VerifyServerSecret::class)->prefix('server/firewall')->group(function () {
+    Route::get('/policy', [FirewallPolicyController::class, 'policy']);
+    Route::post('/applied', [FirewallPolicyController::class, 'applied']);
+});
 
 /*
 |--------------------------------------------------------------------------

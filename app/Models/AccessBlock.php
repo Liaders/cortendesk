@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Services\ServerLink;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -18,17 +17,9 @@ class AccessBlock extends Model
 
     public static function enforcementReady(): bool
     {
-        if (! ServerLink::configured()) {
-            return false;
-        }
-        foreach (['hbbs', 'hbbr'] as $role) {
-            $at = Cache::get('statusdesk:access-blocks:'.$role);
-            if (! is_string($at) || CarbonImmutable::parse($at)->lte(now()->subSeconds(60))) {
-                return false;
-            }
-        }
+        $at = Cache::get('statusdesk:firewall:applied_at');
 
-        return true;
+        return is_string($at) && CarbonImmutable::parse($at)->gt(now()->subSeconds(30));
     }
 
     protected $guarded = ['id'];

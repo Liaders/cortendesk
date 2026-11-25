@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\AccessBlock;
 use App\Models\ClientToken;
 use App\Models\Device;
 use App\Models\DeviceShare;
@@ -108,8 +107,6 @@ class ServerLink
 
         return [
             'mode' => self::mode(),
-            'blocked' => AccessBlock::effective()->where('kind', 'device')->orderBy('value')->pluck('value')->unique()->values()->all(),
-            'blocked_ips' => (object) AccessBlock::effective()->where('kind', 'ip')->orderBy('expires_at')->get()->mapWithKeys(fn ($block) => [$block->value => $block->expires_at->timestamp])->all(),
             'allow' => $allow,
             'incoming_only' => $incomingOnly,
             'tokens' => (object) $tokens,
@@ -155,11 +152,6 @@ class ServerLink
 
     public static function recordPull(string $agent): void
     {
-        foreach (['hbbs', 'hbbr'] as $role) {
-            if (str_contains($agent, 'access-blocks-v1/'.$role)) {
-                Cache::forever('statusdesk:access-blocks:'.$role, now()->toIso8601String());
-            }
-        }
         Cache::forever(self::PULL_CACHE_KEY, [
             'at' => now()->toIso8601String(),
             'agent' => mb_substr($agent, 0, 80),

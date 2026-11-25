@@ -21,5 +21,6 @@ if [[ $ready != true ]]; then
   exit 1
 fi
 docker exec "$name" php /app/scripts/statusdesk/container-smoke.php
+docker exec -e STATUSDESK_ISOLATED_SMOKE=1 "$name" php /app/scripts/statusdesk/ip-block-container-smoke.php
 docker exec "$name" sh -c 'pidof hbbs && pidof hbbr' >/dev/null
 echo 'Isolated application, report, exports, ID server and relay checks passed.'

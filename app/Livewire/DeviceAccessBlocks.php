@@ -40,10 +40,10 @@ class DeviceAccessBlocks extends Component
 
             return;
         }
-        abort_unless(in_array($kind, ['device', 'ip'], true), 422);
+        abort_unless($kind === 'ip', 422);
         $this->reason = trim($this->reason);
         $this->validate(['reason' => ['required', 'string', 'max:500']]);
-        $value = $kind === 'device' ? $device->rustdesk_id : $this->confirmedIp;
+        $value = $this->confirmedIp;
         if ($kind === 'ip' && (! $value || ! filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE))) {
             $this->addError('reason', __('access_blocks.public_ip_required'));
 
@@ -56,7 +56,7 @@ class DeviceAccessBlocks extends Component
                 AccessBlock::create([
                     'kind' => $kind, 'value' => $value, 'reason' => trim($this->reason),
                     'device_id' => $device->id, 'created_by' => auth()->id(),
-                    'expires_at' => $kind === 'ip' ? now()->addHours(24) : null,
+                    'expires_at' => now()->addHours(24),
                 ]);
                 ConsoleAudit::record('access.block', $kind.': '.$value, 'device', (string) $device->id);
             }
@@ -81,7 +81,7 @@ class DeviceAccessBlocks extends Component
 
         return view('livewire.device-access-blocks', [
             'device' => $device, 'ip' => $ip, 'ready' => AccessBlock::enforcementReady(),
-            'sharedCount' => $ip ? Device::withTrashed()->where('last_online_ip', $device->last_online_ip)->count() : 0,
+            'sharedCount' => $ip ? Device::withTrashed()->whereIn('last_online_ip', [$ip, '::ffff:'.$ip])->count() : 0,
             'blocks' => $this->blocksFor($device)->with('creator')->latest('id')->limit(20)->get(),
         ]);
     }

@@ -20,6 +20,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  firewall:
+    if: github.repository == 'Liaders/cortendesk'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.revision || '' }}
+          persist-credentials: false
+      - run: python3 tests/firewall_agent_test.py
+      - run: sudo apt-get update -qq && sudo apt-get install -y nftables
+      - name: Verify rules only in an isolated network namespace
+        run: sudo unshare --net python3 tests/firewall_agent_nft_test.py
+
   tests:
     if: github.repository == 'Liaders/cortendesk'
     name: PHP ${{ matrix.php }}
@@ -63,7 +76,7 @@ jobs:
 
   container:
     if: github.repository == 'Liaders/cortendesk'
-    needs: tests
+    needs: [tests, firewall]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
