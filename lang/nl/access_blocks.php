@@ -14,4 +14,5 @@ return [
     'confirm_revoke' => 'Blokkering opheffen?',
     'inactive' => 'Verlopen of opgeheven',
     'not_ready' => 'De firewallservice heeft onlangs geen synchronisatie bevestigd.',
+    'pending' => 'Wachten tot de firewall de huidige regels toepast.',
 ];

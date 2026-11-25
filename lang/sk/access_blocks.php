@@ -14,4 +14,5 @@ return [
     'confirm_revoke' => 'Zrušiť blokovanie?',
     'inactive' => 'Platnosť uplynula alebo bolo zrušené',
     'not_ready' => 'Služba firewallu nedávno nepotvrdila synchronizáciu.',
+    'pending' => 'Čaká sa na použitie aktuálnych pravidiel firewallu.',
 ];

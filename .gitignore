@@ -49,3 +49,5 @@ docker-compose.override.yml
 /artifacts/
 *.ppk
 *.pem
+__pycache__/
+*.pyc

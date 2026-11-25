@@ -2,12 +2,13 @@
     <h5>{{ __('access_blocks.title') }}</h5>
     <p class="text-muted">{{ __('access_blocks.help') }}</p>
     @unless ($ready)<p class="text-warning">{{ __('access_blocks.not_ready') }}</p>@endunless
+    @if ($ready && !$applied)<p class="text-muted">{{ __('access_blocks.pending') }}</p>@endif
     <p>{{ __('access_blocks.ip_warning', ['ip' => $ip ?: '—', 'count' => $sharedCount]) }}</p>
     <label for="block-reason-{{ $deviceId }}" class="form-label">{{ __('access_blocks.reason') }}</label>
     <input id="block-reason-{{ $deviceId }}" class="form-control mb-2" wire:model="reason" maxlength="500">
     @error('reason')<p class="text-danger">{{ $message }}</p>@enderror
     <div class="d-flex flex-wrap gap-2">
-        <button class="btn btn-outline-danger" wire:click="block('ip')" wire:confirm="{{ __('access_blocks.confirm_ip', ['ip' => $ip ?: '—']) }}" wire:loading.attr="disabled" @disabled(!$ip)>{{ __('access_blocks.block_ip') }}</button>
+        <button class="btn btn-outline-danger" wire:click="block('ip')" wire:confirm="{{ __('access_blocks.confirm_ip', ['ip' => $ip ?: '—']) }}" wire:loading.attr="disabled" @disabled(!$ip || !$ready)>{{ __('access_blocks.block_ip') }}</button>
     </div>
     @foreach ($blocks as $block)
         <div class="border-top mt-3 pt-2" wire:key="access-block-{{ $block->id }}">

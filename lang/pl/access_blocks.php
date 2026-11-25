@@ -14,4 +14,5 @@ return [
     'confirm_revoke' => 'Usunąć blokadę?',
     'inactive' => 'Wygasła lub odwołana',
     'not_ready' => 'Usługa zapory nie potwierdziła ostatnio synchronizacji.',
+    'pending' => 'Oczekiwanie na zastosowanie aktualnych reguł zapory.',
 ];

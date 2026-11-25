@@ -14,4 +14,5 @@ return [
     'confirm_revoke' => 'Sperre aufheben?',
     'inactive' => 'Abgelaufen oder aufgehoben',
     'not_ready' => 'Der Firewall-Dienst hat die Synchronisierung nicht kürzlich bestätigt.',
+    'pending' => 'Die aktuellen Firewall-Regeln werden noch angewendet.',
 ];

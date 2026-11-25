@@ -14,4 +14,5 @@ return [
     'confirm_revoke' => '¿Eliminar el bloqueo?',
     'inactive' => 'Caducado o revocado',
     'not_ready' => 'El servicio de firewall no ha confirmado la sincronización recientemente.',
+    'pending' => 'Pendiente de aplicar las reglas actuales del firewall.',
 ];

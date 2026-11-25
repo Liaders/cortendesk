@@ -2,9 +2,11 @@
 
 namespace App\Livewire;
 
+use App\Http\Controllers\Api\FirewallPolicyController;
 use App\Models\AccessBlock;
 use App\Models\ConsoleAudit;
 use App\Models\Device;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -81,6 +83,7 @@ class DeviceAccessBlocks extends Component
 
         return view('livewire.device-access-blocks', [
             'device' => $device, 'ip' => $ip, 'ready' => AccessBlock::enforcementReady(),
+            'applied' => AccessBlock::enforcementReady() && Cache::get('statusdesk:firewall:digest') === FirewallPolicyController::snapshot()['digest'],
             'sharedCount' => $ip ? Device::withTrashed()->whereIn('last_online_ip', [$ip, '::ffff:'.$ip])->count() : 0,
             'blocks' => $this->blocksFor($device)->with('creator')->latest('id')->limit(20)->get(),
         ]);

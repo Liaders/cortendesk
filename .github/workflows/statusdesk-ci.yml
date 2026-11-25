@@ -101,7 +101,7 @@ jobs:
 
   publish:
     if: github.repository == 'Liaders/cortendesk' && github.event_name == 'push' && github.ref == 'refs/heads/codex/statusdesk-main'
-    needs: [tests, container]
+    needs: [tests, firewall, container]
     runs-on: ubuntu-latest
     permissions:
       contents: read

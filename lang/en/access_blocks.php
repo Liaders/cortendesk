@@ -14,4 +14,5 @@ return [
     'confirm_revoke' => 'Remove this block?',
     'inactive' => 'Expired or revoked',
     'not_ready' => 'The host firewall service has not confirmed synchronization recently.',
+    'pending' => 'Waiting for the firewall to apply the current rules.',
 ];

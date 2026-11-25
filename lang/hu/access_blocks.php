@@ -14,4 +14,5 @@ return [
     'confirm_revoke' => 'Feloldja ezt a tiltást?',
     'inactive' => 'Lejárt vagy visszavont',
     'not_ready' => 'A tűzfalszolgáltatás mostanában nem erősítette meg a szinkronizálást.',
+    'pending' => 'Várakozás az aktuális tűzfalszabályok alkalmazására.',
 ];

@@ -14,4 +14,5 @@ return [
     'confirm_revoke' => '解除此封禁？',
     'inactive' => '已到期或已解除',
     'not_ready' => '主机防火墙服务近期未确认同步。',
+    'pending' => '正在等待防火墙应用当前规则。',
 ];

@@ -14,4 +14,5 @@ return [
     'confirm_revoke' => 'Lever ce blocage ?',
     'inactive' => 'Expiré ou révoqué',
     'not_ready' => 'Le service de pare-feu n’a pas confirmé la synchronisation récemment.',
+    'pending' => 'En attente de l’application des règles actuelles du pare-feu.',
 ];
