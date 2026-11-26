@@ -24,4 +24,10 @@ return [
     'manual_hint' => 'Onafhankelijke blokkeringen voor de hele server',
     'history_hint' => 'Laatste 200 gebeurtenissen uit beschikbare logboeken',
     'fail2ban' => 'Fail2ban',
+    'since' => 'Begin',
+    'left' => 'Resterend',
+    'repeated' => 'Herhaalde blokkering',
+    'country' => 'Land',
+    'provider' => 'Provider',
+    'geo_hint' => 'IP-referentiegegevens; locatie kan onnauwkeurig zijn.',
 ];

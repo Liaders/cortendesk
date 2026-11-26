@@ -24,4 +24,10 @@ return [
     'manual_hint' => 'Blocages indépendants de tout le serveur',
     'history_hint' => '200 derniers événements des journaux disponibles',
     'fail2ban' => 'Fail2ban',
+    'since' => 'Début',
+    'left' => 'Temps restant',
+    'repeated' => 'Blocage répété',
+    'country' => 'Pays',
+    'provider' => 'Fournisseur',
+    'geo_hint' => 'Données indicatives sur l’IP ; localisation approximative.',
 ];

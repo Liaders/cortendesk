@@ -24,4 +24,10 @@ return [
     'manual_hint' => 'Az egész kiszolgálóra érvényes külön tiltások',
     'history_hint' => 'Az elérhető naplók utolsó 200 eseménye',
     'fail2ban' => 'Fail2ban',
+    'since' => 'Kezdet',
+    'left' => 'Hátralévő idő',
+    'repeated' => 'Ismételt tiltás',
+    'country' => 'Ország',
+    'provider' => 'Szolgáltató',
+    'geo_hint' => 'Tájékoztató IP-adatok; a hely pontatlan lehet.',
 ];

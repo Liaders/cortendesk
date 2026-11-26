@@ -425,9 +425,52 @@ it('preserves explicit unassigned and external sessions even when target primary
 it('provides every report preference translation in all supported locales', function () {
     foreach (array_keys(User::LOCALES) as $locale) {
         $messages = require base_path('lang/'.$locale.'/report_preferences.php');
-        expect(array_keys($messages))->toBe(['exclude_internal', 'saved_hint', 'yes', 'no']);
+        expect(array_keys($messages))->toBe(['exclude_unorganized', 'exclude_internal', 'saved_hint', 'yes', 'no']);
         foreach ($messages as $message) {
             expect(trim($message))->not->toBe('');
         }
     }
+});
+
+it('merges legacy and explicit unorganized sessions and excludes missing organization consistently', function () {
+    $unorganized = reportPresentationDevice('000404');
+    foreach (['ungrouped', null] as $status) {
+        $row = reportPresentationSession($unorganized, $this->source, null);
+        $row->forceFill(['work_group_status' => $status])->saveQuietly();
+    }
+    reportPresentationSession($this->target, $this->source, null);
+    reportPresentationSession($this->target, $this->source, $this->a);
+    reportPresentationSession($this->target, $this->source, $this->b, end: null);
+    $legacy = reportPresentationSession($this->other, $this->source, null);
+    $legacy->forceFill(['work_group_status' => null])->saveQuietly();
+    $page = Livewire::test(ConnectionReport::class)->assertViewHas('count', 6)
+        ->assertViewHas('breakdown', function ($groups) {
+            $missing = collect($groups)->where('name', __('report.ungrouped'));
+
+            return $missing->count() === 1 && $missing->first()['count'] === 2;
+        });
+    $page->set('excludeUnorganized', true)->assertViewHas('count', 3)
+        ->assertViewHas('active', 1)->assertViewHas('total', 7200)
+        ->assertViewHas('breakdown', fn ($groups) => collect($groups)->whereIn('name', [__('report.ungrouped'), __('work_groups.unassigned')])->isEmpty());
+    Livewire::test(ConnectionReport::class)->assertSet('excludeUnorganized', true);
+    $book = reportPresentationWorkbook($page->instance());
+    expect(array_column($book['Сводка']['cells'], 'value'))->toContain(__('report_preferences.exclude_unorganized'), __('report_preferences.yes'));
+    expect(array_column($book['Сеансы']['cells'], 'value'))->not->toContain(__('report.ungrouped'), __('work_groups.unassigned'));
+    $page->set('workGroup', 'unassigned')->assertViewHas('count', 0)
+        ->set('excludeUnorganized', false)->assertViewHas('count', 1);
+});
+
+it('sorts organization totals in both directions without changing report totals', function () {
+    reportPresentationSession($this->target, $this->source, $this->a);
+    reportPresentationSession($this->target, $this->source, $this->a);
+    reportPresentationSession($this->target, $this->source, $this->b, end: '2026-11-01 09:00:00');
+    $page = Livewire::test(ConnectionReport::class)
+        ->call('sortOrganizations', 'count')->assertViewHas('breakdown', fn ($groups) => array_column($groups, 'count') === [1, 2])
+        ->call('sortOrganizations', 'count')->assertViewHas('breakdown', fn ($groups) => array_column($groups, 'count') === [2, 1])
+        ->call('sortOrganizations', 'seconds')->assertViewHas('breakdown', fn ($groups) => array_column($groups, 'seconds') === [7200, 10800])
+        ->call('sortOrganizations', 'seconds')->assertViewHas('breakdown', fn ($groups) => array_column($groups, 'seconds') === [10800, 7200])
+        ->call('sortOrganizations', 'name')->assertViewHas('breakdown', fn ($groups) => array_column($groups, 'name') === [$this->b->name, $this->a->name])
+        ->call('sortOrganizations', 'name')->assertViewHas('breakdown', fn ($groups) => array_column($groups, 'name') === [$this->a->name, $this->b->name])
+        ->assertViewHas('count', 3)->assertViewHas('total', 18000)
+        ->call('sortOrganizations', 'invalid')->assertSet('organizationSort', 'name');
 });

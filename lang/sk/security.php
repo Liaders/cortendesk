@@ -24,4 +24,10 @@ return [
     'manual_hint' => 'Nezávislé blokovania celého servera',
     'history_hint' => 'Posledných 200 udalostí z dostupných denníkov',
     'fail2ban' => 'Fail2ban',
+    'since' => 'Začiatok',
+    'left' => 'Zostáva',
+    'repeated' => 'Opakované blokovanie',
+    'country' => 'Krajina',
+    'provider' => 'Poskytovateľ',
+    'geo_hint' => 'Orientačné údaje IP; poloha môže byť nepresná.',
 ];

@@ -24,4 +24,10 @@ return [
     'manual_hint' => 'Niezależne blokady całego serwera',
     'history_hint' => 'Ostatnie 200 zdarzeń z dostępnych dzienników',
     'fail2ban' => 'Fail2ban',
+    'since' => 'Początek',
+    'left' => 'Pozostało',
+    'repeated' => 'Ponowna blokada',
+    'country' => 'Kraj',
+    'provider' => 'Dostawca',
+    'geo_hint' => 'Orientacyjne dane IP; lokalizacja może być niedokładna.',
 ];

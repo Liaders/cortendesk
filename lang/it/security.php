@@ -24,4 +24,10 @@ return [
     'manual_hint' => 'Blocchi indipendenti di tutto il server',
     'history_hint' => 'Ultimi 200 eventi dai registri disponibili',
     'fail2ban' => 'Fail2ban',
+    'since' => 'Inizio',
+    'left' => 'Tempo rimasto',
+    'repeated' => 'Blocco ripetuto',
+    'country' => 'Paese',
+    'provider' => 'Provider',
+    'geo_hint' => 'Dati IP indicativi; la posizione può essere imprecisa.',
 ];

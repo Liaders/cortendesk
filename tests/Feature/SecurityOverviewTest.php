@@ -2,6 +2,8 @@
 
 use App\Livewire\SecurityOverview;
 use App\Models\User;
+use App\Support\SecurityPresentation;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Livewire;
 
@@ -45,4 +47,33 @@ it('ships matching security translations for every supported locale', function (
             expect(trim($value))->not->toBe('');
         }
     }
+});
+
+it('shows actual ban metadata and escapes provider names while accepting legacy reports', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-11-26 13:00:00', 'UTC'));
+    $admin = User::create(['username' => 'ban-detail-admin', 'password' => 'test', 'is_admin' => true]);
+    $this->actingAs($admin);
+    Cache::put('statusdesk:security:fail2ban', ['state' => 'active', 'received_at' => now()->timestamp, 'bans' => [
+        ['ip' => '8.8.8.8', 'since' => now()->subHour()->timestamp, 'until' => now()->addHour()->timestamp,
+            'repeated' => true, 'country' => 'US', 'provider' => '<script>ISP</script>'],
+    ], 'events' => []]);
+    Livewire::test(SecurityOverview::class)->assertSee(__('security.repeated'))->assertSee('01:00:00')
+        ->assertSee('26.11.2026 15:00:00')->assertDontSeeHtml('<script>ISP</script>');
+    expect(SecurityPresentation::country(null))->toBe(__('security.unknown'));
+});
+
+it('validates optional ban details before storing a collector snapshot', function () {
+    config(['cortendesk.server_secret' => 'monitor-secret']);
+    $payload = ['state' => 'active', 'bans' => [[
+        'ip' => '8.8.8.8', 'since' => 1700000000, 'until' => 1700003600,
+        'repeated' => true, 'country' => 'US', 'provider' => 'Example ISP',
+    ]], 'events' => []];
+    $this->withToken('monitor-secret')->postJson('/api/server/security/status', $payload)->assertNoContent();
+    expect(Cache::get('statusdesk:security:fail2ban')['bans'])->toBe($payload['bans']);
+    foreach (['since' => -1, 'country' => 'USA', 'provider' => str_repeat('x', 161), 'repeated' => 'yes'] as $field => $bad) {
+        $invalid = $payload;
+        $invalid['bans'][0][$field] = $bad;
+        $this->postJson('/api/server/security/status', $invalid)->assertUnprocessable();
+    }
+    expect(Cache::get('statusdesk:security:fail2ban')['bans'])->toBe($payload['bans']);
 });

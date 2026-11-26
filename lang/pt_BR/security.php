@@ -24,4 +24,10 @@ return [
     'manual_hint' => 'Bloqueios independentes de todo o servidor',
     'history_hint' => 'Últimos 200 eventos dos registros disponíveis',
     'fail2ban' => 'Fail2ban',
+    'since' => 'Início',
+    'left' => 'Tempo restante',
+    'repeated' => 'Bloqueio repetido',
+    'country' => 'País',
+    'provider' => 'Provedor',
+    'geo_hint' => 'Dados de referência de IP; localização aproximada.',
 ];

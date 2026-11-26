@@ -24,4 +24,10 @@ return [
     'manual_hint' => 'Unabhängige Sperren für den gesamten Server',
     'history_hint' => 'Letzte 200 Ereignisse aus verfügbaren Protokollen',
     'fail2ban' => 'Fail2ban',
+    'since' => 'Beginn',
+    'left' => 'Verbleibend',
+    'repeated' => 'Wiederholte Sperre',
+    'country' => 'Land',
+    'provider' => 'Anbieter',
+    'geo_hint' => 'IP-Referenzdaten; der Standort kann ungenau sein.',
 ];

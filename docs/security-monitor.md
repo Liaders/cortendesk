@@ -33,3 +33,21 @@ timestamps and ban/unban enums. It does not execute any host operations.
 Deployment requires an updated Console image and a new collector service.
 Do not restart the live container or install/start the collector without the
 user's explicit go-ahead when active RustDesk sessions may be present.
+
+## Ban details and IP reference
+
+Active bans include the actual start, expiration and repeat-ban flag from the
+read-only fail2ban database. Missing metadata stays unknown. The page calculates
+remaining time at each refresh and displays dates in GMT+3. Old collector
+snapshots without these optional fields remain compatible.
+
+Country and ISP are informational IP reference data, not verified attacker
+identity. The host sends only public banned IP addresses to the HTTPS
+`https://ipwho.is/` service, without Console credentials, usernames or logs.
+Results are cached for seven days; failures for one hour. At most two lookups
+run per collection and 400 per day. A lookup failure never affects bans.
+The private persistent cache is stored in
+`/var/lib/statusdesk-security-monitor/ip-cache.json`; the updated systemd unit
+provides this directory with mode 0700. Updating this feature requires the
+Console image, collector script and unit, followed by a collector restart.
+Do not apply or restart either service until explicitly authorized.

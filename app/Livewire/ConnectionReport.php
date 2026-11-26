@@ -42,6 +42,22 @@ class ConnectionReport extends Component
 
     public bool $excludeInternal = false;
 
+    public bool $excludeUnorganized = false;
+
+    public string $organizationSort = '';
+
+    public string $organizationDirection = 'asc';
+
+    public function sortOrganizations(string $column): void
+    {
+        $this->authorizeConsole('audit');
+        if (! in_array($column, ['name', 'count', 'seconds'], true)) {
+            return;
+        }
+        $this->organizationDirection = $this->organizationSort === $column && $this->organizationDirection === 'asc' ? 'desc' : 'asc';
+        $this->organizationSort = $column;
+    }
+
     public function mount(): void
     {
         $this->authorizeConsole('audit');
@@ -53,6 +69,7 @@ class ConnectionReport extends Component
             $group = $saved['workGroup'] ?? '';
             $this->workGroup = is_string($group) && preg_match('/^(?:[1-9][0-9]*|unassigned)?$/D', $group) ? $group : '';
             $this->excludeInternal = ($saved['excludeInternal'] ?? false) === true;
+            $this->excludeUnorganized = ($saved['excludeUnorganized'] ?? false) === true;
         }
     }
 
@@ -83,12 +100,13 @@ class ConnectionReport extends Component
             }
         }
         $this->resetPage();
-        if (in_array($property, ['source', 'target', 'workGroup', 'excludeInternal'], true) || str_starts_with($property, 'source.') || str_starts_with($property, 'target.')) {
+        if (in_array($property, ['source', 'target', 'workGroup', 'excludeInternal', 'excludeUnorganized'], true) || str_starts_with($property, 'source.') || str_starts_with($property, 'target.')) {
             auth()->user()->forceFill(['connection_report_filters' => [
                 'source' => $this->cleanFilters($this->source, ['device_group_id', 'user_id', 'user_group_id', 'rustdesk_id']),
                 'target' => $this->cleanFilters($this->target, ['user_id', 'user_group_id', 'rustdesk_id']),
                 'workGroup' => preg_match('/^(?:[1-9][0-9]*|unassigned)?$/D', $this->workGroup) ? $this->workGroup : '',
                 'excludeInternal' => $this->excludeInternal,
+                'excludeUnorganized' => $this->excludeUnorganized,
             ]])->save();
         }
     }
@@ -123,6 +141,7 @@ class ConnectionReport extends Component
             }],
             'workGroup' => ['nullable', 'string', 'max:30', 'regex:/^(?:[1-9][0-9]*|unassigned)?$/'],
             'excludeInternal' => ['boolean'],
+            'excludeUnorganized' => ['boolean'],
             'source' => 'array:device_group_id,user_id,user_group_id,rustdesk_id',
             'target' => 'array:user_id,user_group_id,rustdesk_id',
             'source.*' => 'nullable|string|max:255', 'target.*' => 'nullable|string|max:255',
@@ -211,6 +230,14 @@ class ConnectionReport extends Component
             });
         }
 
+        if ($this->excludeUnorganized) {
+            // Match presentation: legacy sessions use the device's primary organization.
+            $q->where(fn ($q) => $q
+                ->where(fn ($q) => $q->whereIn('work_group_status', ['automatic', 'selected'])->whereNotNull('work_group_id'))
+                ->orWhere(fn ($q) => $q->whereNull('work_group_status')
+                    ->whereHas('controlledDevice', fn ($q) => $q->whereNotNull('device_group_id'))));
+        }
+
         if ($this->excludeInternal) {
             // Use the same legacy fallback as organization filtering and report presentation.
             // Confirmed and explicitly unassigned sessions never inherit target membership.
@@ -257,7 +284,7 @@ class ConnectionReport extends Component
             $operators[$operator] ??= ['name' => ConnectionReportPresentation::operator($row, $devices, $webUsers), 'count' => 0, 'seconds' => 0];
             $operators[$operator]['count']++;
             $operators[$operator]['seconds'] += $seconds;
-            $key = $row->work_group_status === null ? ($devices->get($row->rustdesk_id)?->device_group_id ?? 0) : ($row->work_group_id ?? $row->work_group_status);
+            $key = $row->work_group_status === null ? ($devices->get($row->rustdesk_id)?->device_group_id ?? 'ungrouped') : ($row->work_group_id ?? $row->work_group_status);
             $breakdown[$key] ??= ['name' => SessionWorkGroups::label($row), 'count' => 0, 'seconds' => 0];
             $breakdown[$key]['count']++;
             $breakdown[$key]['seconds'] += $seconds;
@@ -288,6 +315,7 @@ class ConnectionReport extends Component
             $summary[] = [$text($filter['label']), $text($filter['value'])];
         }
         $summary[] = [$text(__('report_preferences.exclude_internal')), $text($this->excludeInternal ? __('report_preferences.yes') : __('report_preferences.no'))];
+        $summary[] = [$text(__('report_preferences.exclude_unorganized')), $text($this->excludeUnorganized ? __('report_preferences.yes') : __('report_preferences.no'))];
         array_push($summary,
             [$text(__('report.matching_sessions')), ReportWorkbook::number($matchedCount)],
             [$text(__('report.exported_sessions')), ReportWorkbook::number($data['count'])],
@@ -383,6 +411,12 @@ class ConnectionReport extends Component
             ];
         }
 
+        if (in_array($this->organizationSort, ['name', 'count', 'seconds'], true)) {
+            $data['breakdown'] = collect($data['breakdown'])->sortBy([
+                [$this->organizationSort, $this->organizationDirection === 'desc' ? 'desc' : 'asc'],
+                ['name', 'asc'],
+            ])->all();
+        }
         $data['workGroups'] = $this->workGroups($data['devices']);
         $data['filterSummary'] = $this->filterSummary($data);
         $data['sourceDevices'] = $this->deviceOptions('source')->orderBy('rustdesk_id')->get();

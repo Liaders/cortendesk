@@ -24,4 +24,10 @@ return [
     'manual_hint' => 'Independent full-server IP blocks',
     'history_hint' => 'Last 200 events from available log files',
     'fail2ban' => 'Fail2ban',
+    'since' => 'Started',
+    'left' => 'Remaining',
+    'repeated' => 'Repeat ban',
+    'country' => 'Country',
+    'provider' => 'Provider',
+    'geo_hint' => 'IP reference data; location may be inaccurate.',
 ];

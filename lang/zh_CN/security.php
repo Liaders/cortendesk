@@ -24,4 +24,10 @@ return [
     'manual_hint' => '独立的全服务器 IP 封禁',
     'history_hint' => '可用日志中最近的 200 条事件',
     'fail2ban' => 'Fail2ban',
+    'since' => '开始时间',
+    'left' => '剩余时间',
+    'repeated' => '重复封禁',
+    'country' => '国家',
+    'provider' => '提供商',
+    'geo_hint' => 'IP 参考信息，位置可能不准确。',
 ];

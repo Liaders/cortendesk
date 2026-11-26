@@ -42,6 +42,10 @@
             <input class="form-check-input" type="checkbox" id="exclude-internal" wire:model.live="excludeInternal">
             <label class="form-check-label" for="exclude-internal">{{ __('report_preferences.exclude_internal') }}</label>
         </div>
+        <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" id="exclude-unorganized" wire:model.live="excludeUnorganized">
+            <label class="form-check-label" for="exclude-unorganized">{{ __('report_preferences.exclude_unorganized') }}</label>
+        </div>
         <p class="text-muted fs-13 mt-2">{{ __('report_preferences.saved_hint') }}</p>
         <details class="text-muted mt-3 mb-3"><summary>{{ __('report.method') }}</summary><p class="mt-2">{{ __('report.help', ['timezone' => \App\Livewire\ConnectionReport::TIMEZONE_LABEL]) }}</p>
         <p>{{ __('report.attribution') }}</p><p>{{ __('console_usability.report_note') }}</p><p>{{ __('work_groups.report_help') }}</p></details>
@@ -69,10 +73,19 @@
         @endforeach
     </div>
     <div class="card"><div class="card-body"><h5>{{ __('report.customers') }}</h5>
-        <div class="table-responsive d-none d-md-block"><table class="table"><thead><tr><th>{{ __('work_groups.work_group') }}</th><th>{{ __('report.sessions') }}</th><th>{{ __('report.duration') }}</th></tr></thead><tbody>
+        <div class="table-responsive d-none d-md-block"><table class="table"><thead><tr>
+            @foreach (['name' => __('work_groups.work_group'), 'count' => __('report.sessions'), 'seconds' => __('report.duration')] as $column => $label)
+                <th aria-sort="{{ $organizationSort === $column ? ($organizationDirection === 'asc' ? 'ascending' : 'descending') : 'none' }}"><button type="button" class="btn btn-link p-0 text-start text-reset text-decoration-none" wire:click="sortOrganizations('{{ $column }}')">{{ $label }}@if ($organizationSort === $column) <span aria-hidden="true">{{ $organizationDirection === 'asc' ? '↑' : '↓' }}</span>@endif</button></th>
+            @endforeach
+        </tr></thead><tbody>
         @forelse ($breakdown as $group)<tr><td>{{ $group['name'] }}</td><td>{{ $group['count'] }}</td><td>{{ \App\Support\SessionTime::format($group['seconds']) }}</td></tr>@empty<tr><td colspan="3">{{ __('report.empty') }}</td></tr>@endforelse
         </tbody></table></div>
         <div class="d-md-none">
+            <div class="d-flex flex-wrap gap-2 mb-2">
+                @foreach (['name' => __('work_groups.work_group'), 'count' => __('report.sessions'), 'seconds' => __('report.duration')] as $column => $label)
+                    <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="sortOrganizations('{{ $column }}')">{{ $label }}@if ($organizationSort === $column) {{ $organizationDirection === 'asc' ? '↑' : '↓' }}@endif</button>
+                @endforeach
+            </div>
             @forelse ($breakdown as $group)
                 <div class="rd-mini mb-2"><span class="rd-mini-title">{{ $group['name'] }}</span><span class="rd-mini-sub">{{ $group['count'] }} · {{ \App\Support\SessionTime::format($group['seconds']) }}</span></div>
             @empty<p>{{ __('report.empty') }}</p>@endforelse

@@ -340,3 +340,19 @@ change device or session records. An image rollback can leave the added nullable
 column in place; it is ignored by the previous image. Do not run migration down
 as part of an ordinary rollback. These changes are prepared locally and require
 separate deployment authorization.
+
+## Report presentation and optional exclusions
+
+The report merges explicit `ungrouped` sessions with legacy sessions whose
+current target has no primary organization into one unorganized row. Sessions
+with status `required` remain a distinct organization-not-selected row.
+The optional `excludeUnorganized` filter removes both categories from the query,
+including active sessions, summary totals, pagination and XLSX exports. Legacy
+sessions with a current primary organization remain included. Confirmed sessions
+use their saved organization, never the target's current primary organization.
+This preference is saved per viewer alongside the other filters; missing saved
+values default to false. It changes no access or assignment rules.
+
+The web organization breakdown can be sorted in either direction by name,
+completed session count or numeric total duration. Sorting changes presentation
+only, without changing totals, session pagination or the exported workbook.

@@ -13,10 +13,17 @@
         <h5>{{ __('security.bans') }}</h5>
         <p class="text-muted">{{ __('security.scope') }}</p>
         @if ($snapshot && $snapshot['state'] === 'active')
-            <div class="table-responsive"><table class="table"><thead><tr><th>IP</th><th>{{ __('security.until') }}</th></tr></thead><tbody>
+            <p class="text-muted fs-13">{{ __('security.geo_hint') }} <a href="https://ipwhois.io/" target="_blank" rel="noopener noreferrer">IPWHOIS.io</a></p>
+            <div class="table-responsive"><table class="table"><thead><tr><th>IP</th><th>{{ __('security.country') }}</th><th>{{ __('security.provider') }}</th><th>{{ __('security.since') }}</th><th>{{ __('security.until') }}</th><th>{{ __('security.left') }}</th></tr></thead><tbody>
                 @forelse ($snapshot['bans'] as $ban)
-                    <tr><td>{{ $ban['ip'] }}</td><td>{{ $ban['until'] ? \Carbon\CarbonImmutable::createFromTimestamp($ban['until'])->timezone('Europe/Moscow')->format('j.n.Y H:i:s').' GMT+3' : __('security.unknown') }}</td></tr>
-                @empty<tr><td colspan="2">{{ __('security.empty') }}</td></tr>@endforelse
+                    <tr><td>{{ $ban['ip'] }}
+                        @if (($ban['repeated'] ?? null) === true)<br><small class="text-warning">{{ __('security.repeated') }}</small>@endif
+                    </td><td>{{ \App\Support\SecurityPresentation::country($ban['country'] ?? null) }}</td>
+                    <td>{{ $ban['provider'] ?? __('security.unknown') }}</td>
+                    <td class="text-nowrap">{{ ($ban['since'] ?? null) ? \Carbon\CarbonImmutable::createFromTimestamp($ban['since'])->timezone('Europe/Moscow')->format('j.n.Y H:i:s') : __('security.unknown') }}</td>
+                    <td class="text-nowrap">{{ $ban['until'] ? \Carbon\CarbonImmutable::createFromTimestamp($ban['until'])->timezone('Europe/Moscow')->format('j.n.Y H:i:s') : __('security.unknown') }}</td>
+                    <td>{{ $ban['until'] ? \App\Support\SessionTime::format(max(0, $ban['until'] - now()->timestamp)) : __('security.unknown') }}</td></tr>
+                @empty<tr><td colspan="6">{{ __('security.empty') }}</td></tr>@endforelse
             </tbody></table></div>
         @endif
     </div></div>
