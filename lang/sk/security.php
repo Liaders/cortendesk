@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'title' => 'Bezpečnosť',
+    'active' => 'Aktívne',
+    'inactive' => 'Neaktívne',
+    'error' => 'Nedostupné',
+    'no_data' => 'Žiadne údaje',
+    'stale' => 'Zastarané údaje',
+    'bans' => 'Blokovania SSH',
+    'until' => 'Do',
+    'unknown' => 'Neznáme',
+    'empty' => 'Žiadne záznamy',
+    'history' => 'Posledné udalosti',
+    'time' => 'Čas',
+    'event' => 'Udalosť',
+    'ban' => 'Zablokované',
+    'unban' => 'Odblokované',
+    'manual' => 'Ručné blokovania IP',
+    'reason' => 'Dôvod',
+    'updated' => 'Aktualizované',
+    'readonly' => 'Iba čítanie',
+    'scope' => 'Porty SSH 22 a 2222',
+    'manual_hint' => 'Nezávislé blokovania celého servera',
+    'history_hint' => 'Posledných 200 udalostí z dostupných denníkov',
+    'fail2ban' => 'Fail2ban',
+];

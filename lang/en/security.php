@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'title' => 'Security',
+    'active' => 'Running',
+    'inactive' => 'Inactive',
+    'error' => 'Unavailable',
+    'no_data' => 'No data received',
+    'stale' => 'Data is outdated',
+    'bans' => 'SSH bans',
+    'until' => 'Until',
+    'unknown' => 'Unknown',
+    'empty' => 'No entries',
+    'history' => 'Recent events',
+    'time' => 'Time',
+    'event' => 'Event',
+    'ban' => 'Banned',
+    'unban' => 'Unbanned',
+    'manual' => 'Manual IP blocks',
+    'reason' => 'Reason',
+    'updated' => 'Updated',
+    'readonly' => 'View only',
+    'scope' => 'SSH ports 22 and 2222',
+    'manual_hint' => 'Independent full-server IP blocks',
+    'history_hint' => 'Last 200 events from available log files',
+    'fail2ban' => 'Fail2ban',
+];

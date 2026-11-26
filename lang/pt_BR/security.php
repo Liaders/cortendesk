@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'title' => 'Segurança',
+    'active' => 'Ativo',
+    'inactive' => 'Inativo',
+    'error' => 'Indisponível',
+    'no_data' => 'Sem dados',
+    'stale' => 'Dados desatualizados',
+    'bans' => 'Bloqueios SSH',
+    'until' => 'Até',
+    'unknown' => 'Desconhecido',
+    'empty' => 'Sem registros',
+    'history' => 'Eventos recentes',
+    'time' => 'Hora',
+    'event' => 'Evento',
+    'ban' => 'Bloqueado',
+    'unban' => 'Desbloqueado',
+    'manual' => 'Bloqueios IP manuais',
+    'reason' => 'Motivo',
+    'updated' => 'Atualizado',
+    'readonly' => 'Somente leitura',
+    'scope' => 'Portas SSH 22 e 2222',
+    'manual_hint' => 'Bloqueios independentes de todo o servidor',
+    'history_hint' => 'Últimos 200 eventos dos registros disponíveis',
+    'fail2ban' => 'Fail2ban',
+];

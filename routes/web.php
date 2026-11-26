@@ -186,6 +186,7 @@ Route::middleware('auth')->group(function () {
     // Role administration is super-admin only, full stop: a delegated admin who
     // could edit roles could grant themselves anything.
     Route::middleware('admin')->group(function () {
+        Route::view('/security', 'security.index')->name('security');
         Route::view('/roles', 'roles.index')->name('roles');
     });
 });

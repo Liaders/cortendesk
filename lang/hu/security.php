@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'title' => 'Biztonság',
+    'active' => 'Aktív',
+    'inactive' => 'Inaktív',
+    'error' => 'Nem elérhető',
+    'no_data' => 'Nincs adat',
+    'stale' => 'Elavult adatok',
+    'bans' => 'SSH-tiltások',
+    'until' => 'Eddig',
+    'unknown' => 'Ismeretlen',
+    'empty' => 'Nincs bejegyzés',
+    'history' => 'Legutóbbi események',
+    'time' => 'Idő',
+    'event' => 'Esemény',
+    'ban' => 'Letiltva',
+    'unban' => 'Feloldva',
+    'manual' => 'Kézi IP-tiltások',
+    'reason' => 'Indok',
+    'updated' => 'Frissítve',
+    'readonly' => 'Csak olvasás',
+    'scope' => 'SSH-portok: 22 és 2222',
+    'manual_hint' => 'Az egész kiszolgálóra érvényes külön tiltások',
+    'history_hint' => 'Az elérhető naplók utolsó 200 eseménye',
+    'fail2ban' => 'Fail2ban',
+];

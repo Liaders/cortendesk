@@ -1,0 +1,20 @@
+[Unit]
+Description=StatusDesk read-only fail2ban monitor
+Wants=network-online.target
+After=network-online.target fail2ban.service docker.service
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/statusdesk/security-monitor.py
+Restart=on-failure
+RestartSec=10
+User=root
+UMask=0077
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

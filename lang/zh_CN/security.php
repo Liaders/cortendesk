@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'title' => '安全',
+    'active' => '运行中',
+    'inactive' => '未启用',
+    'error' => '不可用',
+    'no_data' => '尚无数据',
+    'stale' => '数据已过期',
+    'bans' => 'SSH 封禁',
+    'until' => '截止时间',
+    'unknown' => '未知',
+    'empty' => '无记录',
+    'history' => '最近事件',
+    'time' => '时间',
+    'event' => '事件',
+    'ban' => '已封禁',
+    'unban' => '已解封',
+    'manual' => '手动 IP 封禁',
+    'reason' => '原因',
+    'updated' => '更新时间',
+    'readonly' => '只读',
+    'scope' => 'SSH 端口 22 和 2222',
+    'manual_hint' => '独立的全服务器 IP 封禁',
+    'history_hint' => '可用日志中最近的 200 条事件',
+    'fail2ban' => 'Fail2ban',
+];

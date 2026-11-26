@@ -151,6 +151,9 @@
                     </a>
                 </li>
 
+                @if (auth()->user()->is_admin)
+                    <li class="rd-nav-item {{ request()->routeIs('security') ? 'rd-current' : '' }}"><a href="{{ route('security') }}" class="rd-nav-link"><i class="ri-shield-check-line"></i><span>{{ __('security.title') }}</span></a></li>
+                @endif
                 <li class="rd-nav-item {{ request()->routeIs('diagnostics*') ? 'rd-current' : '' }}">
                     <a href="{{ route('diagnostics') }}" class="rd-nav-link {{ request()->routeIs('diagnostics*') ? 'active' : '' }}">
                         <i class="ri-pulse-line"></i>

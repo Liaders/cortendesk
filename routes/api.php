@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\DeviceAliasController;
 use App\Http\Controllers\Api\FirewallPolicyController;
 use App\Http\Controllers\Api\GroupTabController;
 use App\Http\Controllers\Api\OrganizationsController;
+use App\Http\Controllers\Api\SecurityStatusController;
 use App\Http\Controllers\Api\ServerLinkController;
 use App\Http\Controllers\Api\SessionWorkGroupController;
 use App\Http\Controllers\Api\SyncController;
@@ -27,6 +28,8 @@ Route::middleware(VerifyServerSecret::class)->prefix('server/firewall')->group(f
     Route::get('/policy', [FirewallPolicyController::class, 'policy']);
     Route::post('/applied', [FirewallPolicyController::class, 'applied']);
 });
+Route::post('/server/security/status', [SecurityStatusController::class, 'store'])
+    ->middleware([VerifyServerSecret::class, 'throttle:6,1,security-status']);
 
 /*
 |--------------------------------------------------------------------------

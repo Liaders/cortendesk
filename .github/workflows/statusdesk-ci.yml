@@ -29,6 +29,7 @@ jobs:
           ref: ${{ inputs.revision || '' }}
           persist-credentials: false
       - run: python3 tests/firewall_agent_test.py
+      - run: python3 tests/security_monitor_test.py
       - run: sudo apt-get update -qq && sudo apt-get install -y nftables
       - name: Verify rules only in an isolated network namespace
         run: sudo unshare --net python3 tests/firewall_agent_nft_test.py

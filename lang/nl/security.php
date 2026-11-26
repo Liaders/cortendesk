@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'title' => 'Beveiliging',
+    'active' => 'Actief',
+    'inactive' => 'Inactief',
+    'error' => 'Niet beschikbaar',
+    'no_data' => 'Geen gegevens',
+    'stale' => 'Verouderde gegevens',
+    'bans' => 'SSH-blokkeringen',
+    'until' => 'Tot',
+    'unknown' => 'Onbekend',
+    'empty' => 'Geen vermeldingen',
+    'history' => 'Recente gebeurtenissen',
+    'time' => 'Tijd',
+    'event' => 'Gebeurtenis',
+    'ban' => 'Geblokkeerd',
+    'unban' => 'Gedeblokkeerd',
+    'manual' => 'Handmatige IP-blokkeringen',
+    'reason' => 'Reden',
+    'updated' => 'Bijgewerkt',
+    'readonly' => 'Alleen lezen',
+    'scope' => 'SSH-poorten 22 en 2222',
+    'manual_hint' => 'Onafhankelijke blokkeringen voor de hele server',
+    'history_hint' => 'Laatste 200 gebeurtenissen uit beschikbare logboeken',
+    'fail2ban' => 'Fail2ban',
+];
